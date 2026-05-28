@@ -294,6 +294,18 @@ window.revokeUser=async(uid)=>{
   await fbDb.ref('usuarios/'+uid).update({aprovado:false});
   await window.loadAdmin();
 };
+window.promoteToAdmin=async(uid,guerra)=>{
+  if(!confirm('Promover '+(guerra||'este militar')+' a Administrador?\nEle terá acesso total ao painel e poderá aprovar usuários e editar o checklist.'))return;
+  await fbDb.ref('usuarios/'+uid).update({admin:true});
+  alert('✅ Militar promovido a Administrador com sucesso!');
+  await window.loadAdmin();
+};
+window.demoteFromAdmin=async(uid,guerra)=>{
+  if(!confirm('Remover privilégios de Administrador de '+(guerra||'este militar')+'?'))return;
+  await fbDb.ref('usuarios/'+uid).update({admin:false});
+  alert('Privilégios de Administrador removidos.');
+  await window.loadAdmin();
+};
 window.updateUserProfile=async(uid)=>{
   const nome=document.getElementById('adm_nome_'+uid)?.value?.trim();
   const guerra=document.getElementById('adm_guerra_'+uid)?.value?.trim();
@@ -920,7 +932,11 @@ function renderAdmin(){
         :`<div style="display:flex;gap:8px;margin-top:4px">
            <button onclick="updateUserProfile('${u.uid}')" class="btn-gray" style="flex:2">💾 Atualizar</button>
            <button onclick="revokeUser('${u.uid}')" style="flex:1;background:#1C0808;color:#FCA5A5;border:1px solid #7F1D1D;border-radius:10px;padding:13px 0;font-size:13px;font-weight:700;cursor:pointer;font-family:'Barlow Condensed',sans-serif">Revogar</button>
-         </div>`
+         </div>
+         ${currentUser?.email===ADMIN_EMAIL?`<div style="margin-top:6px">${u.admin
+           ?`<button onclick="demoteFromAdmin('${u.uid}','${esc(u.guerra||u.nome||u.email||'')}')" style="width:100%;background:#0A1628;color:#C28A20;border:1px solid #92600A;border-radius:10px;padding:10px 0;font-size:13px;font-weight:700;cursor:pointer;font-family:'Barlow Condensed',sans-serif;min-height:40px">↓ Remover Admin</button>`
+           :`<button onclick="promoteToAdmin('${u.uid}','${esc(u.guerra||u.nome||u.email||'')}')" style="width:100%;background:#0A1A0A;color:#22C55E;border:1px solid #166534;border-radius:10px;padding:10px 0;font-size:13px;font-weight:700;cursor:pointer;font-family:'Barlow Condensed',sans-serif;min-height:40px">⭐ Promover a Admin</button>`
+         }</div>`:''}`
       }
     </div>`;
     root.innerHTML=`<div class="page">${hdr}${tabs}
@@ -1117,14 +1133,14 @@ ${!identOk()?`<div style="background:#1C1408;border:1px solid #854D0E;border-rad
     let html='';
     sec.items.forEach(([name,qty],i)=>{
       const id=`${sec.id}_${i}`,r=responses[id],isOk=r?.status==='ok',isNc=r?.status==='nc';
-      html+=`<div id="itemcard_${id}" class="item-card ${isOk?'ok':isNc?'nc':''}" style="--anim-i:${i}">
-<div><div id="itemname_${id}" style="font-weight:600;font-size:19px;color:${isNc?'#FCA5A5':isOk?'#86EFAC':'#E8EDF5'}">${esc(name)}</div>
+      html+=`<div class="item-card ${isOk?'ok':isNc?'nc':''}" style="--anim-i:${i}">
+<div><div style="font-weight:600;font-size:19px;color:${isNc?'#FCA5A5':isOk?'#86EFAC':'#E8EDF5'}">${esc(name)}</div>
 <div class="item-qty">${esc(qty)}</div></div>
 <div style="display:flex;gap:6px;margin-top:8px">
-<button id="btnok_${id}" class="item-btn ${isOk?'ok':''}" onclick="setStatus('${id}','ok')" aria-pressed="${isOk}" aria-label="Marcar como conforme">✓ CONFORME</button>
-<button id="btnnc_${id}" class="item-btn ${isNc?'nc':''}" onclick="setStatus('${id}','nc')" aria-pressed="${isNc}" aria-label="Marcar como não conforme">✗ N/C</button>
+<button class="item-btn ${isOk?'ok':''}" onclick="setStatus('${id}','ok')" aria-pressed="${isOk}" aria-label="Marcar como conforme">✓ CONFORME</button>
+<button class="item-btn ${isNc?'nc':''}" onclick="setStatus('${id}','nc')" aria-pressed="${isNc}" aria-label="Marcar como não conforme">✗ N/C</button>
 </div>
-<div id="obssec_${id}">${isNc?`<textarea id="obs_${id}" placeholder="Descreva a não conformidade (obrigatório)..." style="margin-top:8px;min-height:56px;border-color:#DC2626" oninput="setObs('${id}',this.value)">${esc(r?.obs||'')}</textarea>${!r?.obs?.trim()?'<div class="nc-warn">⚠ Descrição obrigatória para registrar N/C.</div>':''}`:`</div>`}
+${isNc?`<div><textarea id="obs_${id}" placeholder="Descreva a não conformidade (obrigatório)..." style="margin-top:8px;min-height:56px;border-color:#DC2626" oninput="setObs('${id}',this.value)">${esc(r?.obs||'')}</textarea>${!r?.obs?.trim()?'<div class="nc-warn">⚠ Descrição obrigatória para registrar N/C.</div>':''}</div>`:''}
 </div>`;
     });
     const secDone=sec.items.every((_,i)=>responses[`${sec.id}_${i}`]?.status);
@@ -1140,19 +1156,19 @@ ${!identOk()?`<div style="background:#1C1408;border:1px solid #854D0E;border-rad
       <div style="font-size:16px;font-weight:700;letter-spacing:.5px;line-height:1.3;opacity:.9" class="ff">${esc(sec.icon)} ${esc(sec.title)}</div>
     </div>
     <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0">
-      <div id="hdr-pct" style="font-size:30px;font-weight:900" class="ff">${prog.pct}%</div>
-      <div id="hdr-done" style="font-size:13px;opacity:.65">${prog.done}/${prog.total}</div>
-      <div id="hdr-todos-ok">${semResposta>0?`<button onclick="marcarTodosOk()" style="background:rgba(255,255,255,0.2);color:white;border:1px solid rgba(255,255,255,0.4);border-radius:6px;padding:3px 8px;cursor:pointer;font-size:13px;font-family:'Barlow Condensed',sans-serif;font-weight:700;white-space:nowrap">✓ Todos Conforme</button>`:''}</div>
+      <div style="font-size:30px;font-weight:900" class="ff">${prog.pct}%</div>
+      <div style="font-size:13px;opacity:.65">${prog.done}/${prog.total}</div>
+      ${semResposta>0?`<button onclick="marcarTodosOk()" style="background:rgba(255,255,255,0.2);color:white;border:1px solid rgba(255,255,255,0.4);border-radius:6px;padding:3px 8px;cursor:pointer;font-size:13px;font-family:'Barlow Condensed',sans-serif;font-weight:700;white-space:nowrap">✓ Todos Conforme</button>`:''}
     </div>
   </div>
-  <div class="prog-row"><span class="prog-lbl">progresso total</span><span id="prog-count" class="prog-count">${prog.done}/${prog.total} itens</span></div><div class="prog-bg"><div id="prog-fill" class="prog-fill" style="width:${prog.pct}%"></div></div>
+  <div class="prog-row"><span class="prog-lbl">progresso total</span><span class="prog-count">${prog.done}/${prog.total} itens</span></div><div class="prog-bg"><div class="prog-fill" style="width:${prog.pct}%"></div></div>
   <div style="font-size:13px;opacity:.55;margin-top:4px" class="ff">Seção ${secIdx+1}/${secs.length} · ${sec.items.length} itens</div>
 </div>
 <div style="padding:14px">${html}</div>
 <div class="bottom-bar">
   <button onclick="prevSec()" class="nav-btn" style="flex:1;background:${secIdx===0?'#0D1825':'#1E3050'};color:${secIdx===0?'#2A4060':'#fff'}">← Voltar</button>
   <button onclick="goSummary()" class="nav-btn" style="background:transparent;border:1px solid #1E3050;padding:12px 14px;color:#7A9ABC">📊</button>
-  <button id="btn-next-sec" onclick="nextSec()" class="nav-btn" style="flex:2;background:${canNext?'#CC0000':'#4A1010'};color:${canNext?'#fff':'#7A3030'}">${isLast?'CONCLUIR ✓':'Próxima →'}</button>
+  <button onclick="nextSec()" class="nav-btn" style="flex:2;background:${canNext?'#CC0000':'#4A1010'};color:${canNext?'#fff':'#7A3030'}">${isLast?'CONCLUIR ✓':'Próxima →'}</button>
 </div></div>`;
     // FIX: restaura posição do scroll sem pular para o topo
     window.scrollTo(0,savedScroll);
@@ -1246,7 +1262,7 @@ ${ncs.length?`<button onclick="gerarParte()" class="btn-gold">📄 GERAR PARTE (
 <div style="background:linear-gradient(160deg,#0D1825,#131F32);padding:16px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #1E3050;position:sticky;top:0;z-index:10">
   <button id="btn-hist-back" style="background:transparent;border:none;color:#7A9ABC;cursor:pointer;font-size:22px;padding:0 8px 0 0">←</button>
   <div style="font-size:18px;font-weight:900;font-family:'Barlow Condensed',sans-serif;letter-spacing:1px">📋 HISTÓRICO</div>
-  <button onclick="clearHistory()" style="background:transparent;border:1px solid #334155;border-radius:6px;padding:4px 10px;color:#EF4444;cursor:pointer;font-size:11px;font-family:'Barlow Condensed',sans-serif">LIMPAR</button>
+  ${userProfile?.admin?`<button onclick="clearHistory()" style="background:transparent;border:1px solid #334155;border-radius:6px;padding:4px 10px;color:#EF4444;cursor:pointer;font-size:11px;font-family:'Barlow Condensed',sans-serif">LIMPAR</button>`:`<div style="width:60px"></div>`}
 </div>
 <div style="padding:14px">
   <div style="font-size:11px;color:#4A6080;margin-bottom:12px">Últimas ${history_cbm.length}/10 conferências registradas. Sincronizado entre todos os dispositivos. ☁️</div>
@@ -1273,104 +1289,25 @@ window.retomar=()=>{
   secs.forEach((s,i)=>{if(s.items.some((_,j)=>responses[`${s.id}_${j}`]?.status))last=i;});
   setState({secIdx:last,screen:'checklist',_keepScroll:false});
 };
-// ── Atualização cirúrgica de DOM ao marcar item (sem re-render)
-function patchProgress(){
-  const p=getProg();
-  const el_pct=document.getElementById('hdr-pct');
-  const el_done=document.getElementById('hdr-done');
-  const el_cnt=document.getElementById('prog-count');
-  const el_fill=document.getElementById('prog-fill');
-  const el_next=document.getElementById('btn-next-sec');
-  const el_todos=document.getElementById('hdr-todos-ok');
-  if(el_pct)el_pct.textContent=p.pct+'%';
-  if(el_done)el_done.textContent=p.done+'/'+p.total;
-  if(el_cnt)el_cnt.textContent=p.done+'/'+p.total+' itens';
-  if(el_fill)el_fill.style.width=p.pct+'%';
-  // Botão Próxima/Concluir
-  if(el_next){
-    const secs=getAct(),sec=secs[secIdx];
-    const canNext=sec?sec.items.every((_,i)=>responses[`${sec.id}_${i}`]?.status):false;
-    const isLast=secIdx>=secs.length-1;
-    el_next.style.background=canNext?'#CC0000':'#4A1010';
-    el_next.style.color=canNext?'#fff':'#7A3030';
-    el_next.textContent=isLast?'CONCLUIR ✓':'Próxima →';
-  }
-  // Botão "Todos Conforme"
-  if(el_todos){
-    const sec=getAct()[secIdx];
-    const semResp=sec?sec.items.filter((_,i)=>!responses[`${sec.id}_${i}`]?.status).length:0;
-    el_todos.innerHTML=semResp>0?'<button onclick="marcarTodosOk()" style="background:rgba(255,255,255,0.2);color:white;border:1px solid rgba(255,255,255,0.4);border-radius:6px;padding:3px 8px;cursor:pointer;font-size:13px;font-family:\'Barlow Condensed\',sans-serif;font-weight:700;white-space:nowrap">✓ Todos Conforme</button>':'' ;
-  }
-}
-
-function patchItemStatus(id,st){
-  const card=document.getElementById('itemcard_'+id);
-  if(!card)return false;
-  const isOk=st==='ok',isNc=st==='nc';
-  // 1. Classe do card
-  card.className='item-card'+(isOk?' ok':isNc?' nc':'');
-  // 2. Cor do nome
-  const nm=document.getElementById('itemname_'+id);
-  if(nm)nm.style.color=isNc?'#FCA5A5':isOk?'#86EFAC':'#E8EDF5';
-  // 3. Botões
-  const bOk=document.getElementById('btnok_'+id);
-  const bNc=document.getElementById('btnnc_'+id);
-  if(bOk){bOk.className='item-btn'+(isOk?' ok':'');bOk.setAttribute('aria-pressed',String(isOk));}
-  if(bNc){bNc.className='item-btn'+(isNc?' nc':'');bNc.setAttribute('aria-pressed',String(isNc));}
-  // 4. Seção de observação (textarea N/C)
-  const sec=document.getElementById('obssec_'+id);
-  if(sec){
-    if(isNc){
-      const r=responses[id];
-      sec.innerHTML=`<textarea id="obs_${id}" placeholder="Descreva a não conformidade (obrigatório)..." style="margin-top:8px;min-height:56px;border-color:#DC2626" oninput="setObs('${id}',this.value)">${esc(r?.obs||'')||''}</textarea>${!r?.obs?.trim()?'<div class="nc-warn">⚠ Descrição obrigatória para registrar N/C.</div>':''}`;
-      setTimeout(()=>{const t=document.getElementById('obs_'+id);if(t){t.focus();t.scrollIntoView({behavior:'smooth',block:'center'});}},50);
-    }else{
-      sec.innerHTML='';
-    }
-  }
-  return true;
-}
-
+// FIX: setStatus preserva scroll
 window.setStatus=(id,st)=>{
   if(!responses[id])responses[id]={};
   responses[id].status=st;
   if(st==='ok')delete responses[id].obs;
   save();
-  // Atualização cirúrgica — sem re-render, sem flash
-  if(!patchItemStatus(id,st)){setState({_keepScroll:true});return;}
-  patchProgress();
+  setState({_keepScroll:true}); // NÃO reseta scroll ao marcar item
+  if(st==='nc'){setTimeout(()=>{const t=document.getElementById('obs_'+id);if(t){t.focus();t.scrollIntoView({behavior:'smooth',block:'center'});}},50);}
 };
-window.setObs=(id,obs)=>{
-  if(!responses[id])responses[id]={};
-  responses[id].obs=obs;
-  save();
-  // Atualiza aviso de observação obrigatória sem re-render
-  const sec=document.getElementById('obssec_'+id);
-  if(sec){
-    const warn=sec.querySelector('.nc-warn');
-    if(obs?.trim()&&warn)warn.remove();
-    else if(!obs?.trim()&&!warn){
-      const d=document.createElement('div');d.className='nc-warn';
-      d.textContent='⚠ Descrição obrigatória para registrar N/C.';
-      sec.appendChild(d);
-    }
-  }
-};
+window.setObs=(id,obs)=>{if(!responses[id])responses[id]={};responses[id].obs=obs;save();};
 // Marcar todos os itens sem resposta da seção atual como CONFORME
 window.marcarTodosOk=()=>{
   const sec=getAct()[secIdx];
   if(!sec)return;
-  let changed=false;
   sec.items.forEach((_,i)=>{
     const id=`${sec.id}_${i}`;
-    if(!responses[id]?.status){
-      if(!responses[id])responses[id]={};
-      responses[id].status='ok';
-      patchItemStatus(id,'ok');
-      changed=true;
-    }
+    if(!responses[id]?.status){if(!responses[id])responses[id]={};responses[id].status='ok';}
   });
-  if(changed){save();patchProgress();}
+  save();setState({_keepScroll:true});
 };
 window.nextSec=()=>{
   const secs=getAct(),sec=secs[secIdx];
