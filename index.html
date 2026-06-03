@@ -1133,15 +1133,7 @@ ${!identOk()?`<div style="background:#1C1408;border:1px solid #854D0E;border-rad
     let html='';
     sec.items.forEach(([name,qty],i)=>{
       const id=`${sec.id}_${i}`,r=responses[id],isOk=r?.status==='ok',isNc=r?.status==='nc';
-      html+=`<div class="item-card ${isOk?'ok':isNc?'nc':''}" style="--anim-i:${i}">
-<div><div style="font-weight:600;font-size:19px;color:${isNc?'#FCA5A5':isOk?'#86EFAC':'#E8EDF5'}">${esc(name)}</div>
-<div class="item-qty">${esc(qty)}</div></div>
-<div style="display:flex;gap:6px;margin-top:8px">
-<button class="item-btn ${isOk?'ok':''}" onclick="setStatus('${id}','ok')" aria-pressed="${isOk}" aria-label="Marcar como conforme">✓ CONFORME</button>
-<button class="item-btn ${isNc?'nc':''}" onclick="setStatus('${id}','nc')" aria-pressed="${isNc}" aria-label="Marcar como não conforme">✗ N/C</button>
-</div>
-${isNc?`<div><textarea id="obs_${id}" placeholder="Descreva a não conformidade (obrigatório)..." style="margin-top:8px;min-height:56px;border-color:#DC2626" oninput="setObs('${id}',this.value)">${esc(r?.obs||'')}</textarea>${!r?.obs?.trim()?'<div class="nc-warn">⚠ Descrição obrigatória para registrar N/C.</div>':''}</div>`:''}
-</div>`;
+      html+=`<div class="item-card ${isOk?'ok':isNc?'nc':''}" style="--anim-i:${i}" data-item-id="${id}"><div><div data-item-name style="font-weight:600;font-size:19px;color:${isNc?'#FCA5A5':isOk?'#86EFAC':'#E8EDF5'}">${esc(name)}</div><div class="item-qty">${esc(qty)}</div></div><div style="display:flex;gap:6px;margin-top:8px"><button data-btn-ok class="item-btn ${isOk?'ok':''}" onclick="setStatus('${id}','ok')" aria-pressed="${isOk}" aria-label="Marcar como conforme">✓ CONFORME</button><button data-btn-nc class="item-btn ${isNc?'nc':''}" onclick="setStatus('${id}','nc')" aria-pressed="${isNc}" aria-label="Marcar como não conforme">✗ N/C</button></div>${isNc?`<div data-obs-area><textarea id="obs_${id}" placeholder="Descreva a não conformidade (obrigatório)..." style="margin-top:8px;min-height:56px;border-color:#DC2626" oninput="setObs('${id}',this.value)">${esc(r?.obs||'')}</textarea>${!r?.obs?.trim()?'<div class="nc-warn">⚠ Descrição obrigatória para registrar N/C.</div>':''}</div>`:''}</div>`;
     });
     const secDone=sec.items.every((_,i)=>responses[`${sec.id}_${i}`]?.status);
     const canNext=secDone;
@@ -1156,19 +1148,19 @@ ${isNc?`<div><textarea id="obs_${id}" placeholder="Descreva a não conformidade 
       <div style="font-size:16px;font-weight:700;letter-spacing:.5px;line-height:1.3;opacity:.9" class="ff">${esc(sec.icon)} ${esc(sec.title)}</div>
     </div>
     <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0">
-      <div style="font-size:30px;font-weight:900" class="ff">${prog.pct}%</div>
-      <div style="font-size:13px;opacity:.65">${prog.done}/${prog.total}</div>
-      ${semResposta>0?`<button onclick="marcarTodosOk()" style="background:rgba(255,255,255,0.2);color:white;border:1px solid rgba(255,255,255,0.4);border-radius:6px;padding:3px 8px;cursor:pointer;font-size:13px;font-family:'Barlow Condensed',sans-serif;font-weight:700;white-space:nowrap">✓ Todos Conforme</button>`:''}
+      <div id="hdr-pct" style="font-size:30px;font-weight:900" class="ff">${prog.pct}%</div>
+      <div id="hdr-cnt" style="font-size:13px;opacity:.65">${prog.done}/${prog.total}</div>
+      <button id="btn-todos-ok" onclick="marcarTodosOk()" style="background:rgba(255,255,255,0.2);color:white;border:1px solid rgba(255,255,255,0.4);border-radius:6px;padding:3px 8px;cursor:pointer;font-size:13px;font-family:'Barlow Condensed',sans-serif;font-weight:700;white-space:nowrap;display:${semResposta>0?'':'none'}">✓ Todos Conforme</button>
     </div>
   </div>
-  <div class="prog-row"><span class="prog-lbl">progresso total</span><span class="prog-count">${prog.done}/${prog.total} itens</span></div><div class="prog-bg"><div class="prog-fill" style="width:${prog.pct}%"></div></div>
+  <div class="prog-row"><span class="prog-lbl">progresso total</span><span id="prog-cnt" class="prog-count">${prog.done}/${prog.total} itens</span></div><div class="prog-bg"><div id="prog-fill" class="prog-fill" style="width:${prog.pct}%"></div></div>
   <div style="font-size:13px;opacity:.55;margin-top:4px" class="ff">Seção ${secIdx+1}/${secs.length} · ${sec.items.length} itens</div>
 </div>
 <div style="padding:14px">${html}</div>
 <div class="bottom-bar">
   <button onclick="prevSec()" class="nav-btn" style="flex:1;background:${secIdx===0?'#0D1825':'#1E3050'};color:${secIdx===0?'#2A4060':'#fff'}">← Voltar</button>
   <button onclick="goSummary()" class="nav-btn" style="background:transparent;border:1px solid #1E3050;padding:12px 14px;color:#7A9ABC">📊</button>
-  <button onclick="nextSec()" class="nav-btn" style="flex:2;background:${canNext?'#CC0000':'#4A1010'};color:${canNext?'#fff':'#7A3030'}">${isLast?'CONCLUIR ✓':'Próxima →'}</button>
+  <button id="btn-next-sec" onclick="nextSec()" class="nav-btn" style="flex:2;background:${canNext?'#CC0000':'#4A1010'};color:${canNext?'#fff':'#7A3030'}">${isLast?'CONCLUIR ✓':'Próxima →'}</button>
 </div></div>`;
     // FIX: restaura posição do scroll sem pular para o topo
     window.scrollTo(0,savedScroll);
@@ -1289,14 +1281,88 @@ window.retomar=()=>{
   secs.forEach((s,i)=>{if(s.items.some((_,j)=>responses[`${s.id}_${j}`]?.status))last=i;});
   setState({secIdx:last,screen:'checklist',_keepScroll:false});
 };
-// FIX: setStatus preserva scroll
+// ════════════════════════════════════
+//  PATCH CIRÚRGICO DE DOM — sem piscada
+//  Atualiza apenas o card afetado e os contadores,
+//  sem substituir o innerHTML completo da página.
+// ════════════════════════════════════
+function patchItemStatus(id, st){
+  const card=document.querySelector(`[data-item-id="${id}"]`);
+  if(!card)return false;
+  const r=responses[id];
+  const isOk=st==='ok', isNc=st==='nc';
+  // Classe do card
+  card.className='item-card '+(isOk?'ok':isNc?'nc':'');
+  // Cor do nome
+  const nameEl=card.querySelector('[data-item-name]');
+  if(nameEl)nameEl.style.color=isNc?'#FCA5A5':isOk?'#86EFAC':'#E8EDF5';
+  // Botões
+  const btnOk=card.querySelector('[data-btn-ok]');
+  const btnNc=card.querySelector('[data-btn-nc]');
+  if(btnOk){btnOk.className='item-btn '+(isOk?'ok':'');btnOk.setAttribute('aria-pressed',isOk);}
+  if(btnNc){btnNc.className='item-btn '+(isNc?'nc':'');btnNc.setAttribute('aria-pressed',isNc);}
+  // Área de observação
+  const obsArea=card.querySelector('[data-obs-area]');
+  if(isNc){
+    if(!obsArea){
+      const div=document.createElement('div');
+      div.setAttribute('data-obs-area','');
+      div.innerHTML=`<textarea id="obs_${id}" placeholder="Descreva a não conformidade (obrigatório)..." style="margin-top:8px;min-height:56px;border-color:#DC2626;display:block;width:100%;background:#090E1A;border:1.5px solid #DC2626;border-radius:8px;padding:11px 13px;color:#E8EDF5;font-size:14px;margin-bottom:8px;font-family:'Barlow',sans-serif" oninput="setObs('${id}',this.value)"></textarea><div class="nc-warn">⚠ Descrição obrigatória para registrar N/C.</div>`;
+      card.appendChild(div);
+      setTimeout(()=>{const t=document.getElementById('obs_'+id);if(t){t.focus();t.scrollIntoView({behavior:'smooth',block:'center'});}},50);
+    }
+  }else{
+    if(obsArea)obsArea.remove();
+  }
+  return true;
+}
+function patchProgress(){
+  const prog=getProg();
+  const sec=getAct()[secIdx];
+  // Percentual no header
+  const pctEl=document.getElementById('hdr-pct');
+  if(pctEl)pctEl.textContent=prog.pct+'%';
+  // Contadores
+  const cntEl=document.getElementById('hdr-cnt');
+  if(cntEl)cntEl.textContent=prog.done+'/'+prog.total;
+  const progCntEl=document.getElementById('prog-cnt');
+  if(progCntEl)progCntEl.textContent=prog.done+'/'+prog.total+' itens';
+  // Barra de progresso
+  const fillEl=document.getElementById('prog-fill');
+  if(fillEl)fillEl.style.width=prog.pct+'%';
+  // Botão Todos Conforme
+  if(sec){
+    const semResposta=sec.items.filter((_,i)=>!responses[`${sec.id}_${i}`]?.status).length;
+    const btnTodos=document.getElementById('btn-todos-ok');
+    if(btnTodos)btnTodos.style.display=semResposta>0?'':'none';
+  }
+  // Botão Próxima/Concluir
+  if(sec){
+    const secDone=sec.items.every((_,i)=>responses[`${sec.id}_${i}`]?.status);
+    const isLast=secIdx>=getAct().length-1;
+    const btnNext=document.getElementById('btn-next-sec');
+    if(btnNext){
+      btnNext.style.background=secDone?'#CC0000':'#4A1010';
+      btnNext.style.color=secDone?'#fff':'#7A3030';
+      btnNext.textContent=isLast?'CONCLUIR ✓':'Próxima →';
+    }
+  }
+}
+
+// FIX: setStatus usa patch cirúrgico — sem piscada, sem scroll-jump
 window.setStatus=(id,st)=>{
   if(!responses[id])responses[id]={};
   responses[id].status=st;
   if(st==='ok')delete responses[id].obs;
   save();
-  setState({_keepScroll:true}); // NÃO reseta scroll ao marcar item
-  if(st==='nc'){setTimeout(()=>{const t=document.getElementById('obs_'+id);if(t){t.focus();t.scrollIntoView({behavior:'smooth',block:'center'});}},50);}
+  // Tenta patch cirúrgico primeiro; só faz render completo se o card não existir no DOM
+  const patched=patchItemStatus(id,st);
+  if(patched){
+    patchProgress();
+  }else{
+    setState({_keepScroll:true});
+    if(st==='nc'){setTimeout(()=>{const t=document.getElementById('obs_'+id);if(t){t.focus();t.scrollIntoView({behavior:'smooth',block:'center'});}},50);}
+  }
 };
 window.setObs=(id,obs)=>{if(!responses[id])responses[id]={};responses[id].obs=obs;save();};
 // Marcar todos os itens sem resposta da seção atual como CONFORME
