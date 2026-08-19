@@ -6,10 +6,11 @@
    - navegação (HTML): network-first (offline cai no cache).
    - demais GET elegíveis: stale-while-revalidate. */
 
-const CACHE = 'cbmrs-conferencia-cache-v1';
+const CACHE = 'cbmrs-conferencia-cache-v2';
 const SAME = [
   './', 'index.html', 'manifest.webmanifest',
   'assets/icon-192.png', 'assets/icon-512.png', 'assets/cesar-coin.png',
+  'assets/favicon-16.png', 'assets/favicon-32.png', 'assets/apple-touch-icon.png',
   'img/banner.jpg', 'img/banner.webp'
 ];
 const CROSS = [
