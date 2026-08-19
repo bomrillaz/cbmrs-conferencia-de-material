@@ -80,7 +80,20 @@ Trabalho em português.
   o `sw.js` do CTSP (já validado em produção) dá o mesmo erro nesse ambiente. Não é bug: confirmar
   funcionamento real só depois de publicado (HTTPS/GitHub Pages), igual ao CTSP.
 
-## 5. INÍCIO E FIM DE SESSÃO
+## 5. MATERIAL DE REFERÊNCIA
+
+`materiais/` é **gitignorada** (mesmo padrão do CTSP) — nunca commitar. Subpastas:
+- `entregas/planos/` — `PLANO_*.md` de trabalho em andamento. Plano executado é plano apagado
+  (avisar o João e apagar no mesmo bloco ao terminar, mesma regra do CTSP).
+- `historico/` — os 3 docx do histórico real do projeto (`Bombeiros-Site #1/#2/#3`), mantidos como
+  registro do que já foi feito antes deste repo virar git-versionado.
+- `referencia/` — material de apoio (PDF do formulário de conferência, docs de mangueiras/partes).
+- `marca/` — imagens de referência visual (prompts de IA de viaturas/cenário) usadas como inspiração
+  pro reskin; não são assets do site publicado (esses ficam em `assets/`/`img/`, versionados).
+
+**Arquivo novo:** ao criar, colocar direto na subpasta certa pelo assunto — não deixar solto na raiz.
+
+## 6. INÍCIO E FIM DE SESSÃO
 
 Memória do projeto vive no vault Obsidian, fora do repo:
 `Documents\Claude\vault\10-projetos\bomrillaz-conferencia\_estado.md`.

@@ -2,3 +2,5 @@
 *.env
 secrets.js
 config.local.js
+.tmp/
+materiais/
