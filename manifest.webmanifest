@@ -1,0 +1,35 @@
+{
+  "name": "Conferência de Material - CBMRS",
+  "short_name": "Conferência",
+  "description": "Checklist de conferência de material de viaturas do Corpo de Bombeiros Militar do RS — 1ª CiaBM / 4º PelBM, São Marcos.",
+  "lang": "pt-BR",
+  "dir": "ltr",
+  "start_url": "./",
+  "scope": "./",
+  "id": "/cbmrs-conferencia-de-material/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F7F3EC",
+  "theme_color": "#D32412",
+  "categories": ["utilities"],
+  "icons": [
+    {
+      "src": "assets/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
