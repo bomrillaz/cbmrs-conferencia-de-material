@@ -34,13 +34,28 @@ Trabalho em português.
 - Viaturas: `ar797` (AR 797, Ambulância de Resgate), `abt660` (ABT 660), `abt9468` (ABT 9468),
   `atm1209` (ATM 1209, Auto Transporte de Materiais), `sop` (Sala de Operações).
 - Export de relatório em Word (`.doc`) e impressão HTML. Histórico FIFO de 10 conferências.
-- Painel admin: promoção/revogação de admin, editor de checklist por viatura.
+- **Painel admin**: promoção/revogação de admin, editor de checklist livre por viatura (seção/título/
+  item/subitem, CRUD completo + drag-and-drop via Pointer Events), toggle de "conta funcional".
+- **Checklist custom (`checklist_custom` no RTDB) em dual-write** (v2026.7.0): `rows` (formato novo,
+  id estável por linha, títulos e subitens) é a verdade; `items` (tuplas legadas `[nome,qtd]`) é um
+  espelho achatado gravado junto, só pra um celular com bundle de cache antigo não cair silenciosamente
+  no checklist de fábrica. **Não remover o espelho `items`** até confirmar que todo o efetivo atualizou
+  o PWA — normalização fica em `secRows`/`secChecks`/`rowKey` (`index.html`, perto de `getSC()`).
+- **Login funcional** (v2026.7.0): conta marcada com `usuarios/{uid}.funcional=true` mostra uma tela
+  de escolha de "responsável" (lista vem do nó `efetivo/{uid}`, espelho de `usuarios` legível por
+  não-admin) em vez do perfil fixo. Decisão de segurança confirmada com o João: a conta funcional
+  **nunca** é admin no banco — quem precisa do painel faz re-login individual (`signInWithEmailAndPassword`
+  num overlay dedicado). Gate real sempre por `isAdminUI()` (deriva de `userProfile.admin`, nunca do
+  responsável selecionado). Ver `PLANO_editor_livre_e_login_funcional.md` (se ainda existir em
+  `materiais/entregas/planos/`) e `_estado.md` do vault pro histórico da decisão.
 
 ## 2. REGRAS INVIOLÁVEIS
 
 - **As regras do RTDB são o perímetro real**, não `ADMIN_EMAIL`/`userProfile.admin` no cliente
-  (usado só como UX). Regras cobrem `usuarios`, `historico`, `checklist_custom` — texto completo e
-  confirmado ao vivo no Console em 2026-08-19, ver `_estado.md` do projeto no vault.
+  (usado só como UX). Regras cobrem `usuarios`, `historico`, `checklist_custom`, `efetivo` — texto
+  completo em `materiais/referencia/regras-rtdb/` (gitignorado) e em `_regras_rtdb.md` do vault. Nó
+  `efetivo` publicado em 2026-08-19 (leitura: qualquer aprovado · escrita: só admin), necessário pro
+  login funcional listar o efetivo sem a conta funcional precisar ser admin.
 - **`firebase.initializeApp` 1x só.**
 - Toda saída de dado de banco que vai pro `innerHTML` passa por `esc()` antes.
 - **Rate limit no login** (`checkRateLimit()`, b1 2026-08-19): 5 tentativas / 5 min via `localStorage`,
@@ -69,9 +84,9 @@ Trabalho em português.
   trivial. Sonnet é o padrão; Opus só na fase de decisão de mudança estrutural.
 - Verificação leve: `bash verify_conferencia.sh` (contagens de `esc()`/`innerHTML`, viaturas presentes,
   sintaxe balanceada). Rodar antes de qualquer commit que toque `index.html`.
-  Baseline 2026-08-19 (pós-reskin): `esc()=74` · `innerHTML=15` · `initializeApp=1` · `ADMIN_EMAIL=3` ·
-  `unsafe-eval=0` · `checkRateLimit=2` · `patchItemStatus=2` · `patchProgress=2`. Divergência =
-  investigar antes de seguir.
+  Baseline 2026-08-19 (pós editor livre + login funcional, v2026.7.0): `esc()=94` · `innerHTML=18` ·
+  `initializeApp=1` · `ADMIN_EMAIL=3` · `unsafe-eval=0` · `checkRateLimit=2` · `patchItemStatus=2` ·
+  `patchProgress=2`. Divergência = investigar antes de seguir.
 - **Teste de tela pós-login (home/checklist/admin/resumo) exige login manual do João.** A IA nunca
   digita credencial — abre a aba (navegador embutido do chat) e o João loga; a IA só observa depois.
   Padrão herdado do CTSP: não completar uma conferência de verdade durante o teste, só abrir e conferir
