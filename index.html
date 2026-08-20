@@ -442,6 +442,19 @@ window.updateUserProfile=async(uid)=>{
   alert('Perfil atualizado!');
   await window.loadAdmin();
 };
+window.adminStartEditVehName=(vid)=>{adminEditingVehName=vid;renderAdmin();};
+window.adminCancelEditVehName=()=>{adminEditingVehName=null;renderAdmin();};
+window.adminSaveVehName=async(vid)=>{
+  const val=document.getElementById('veh_name_'+vid)?.value?.trim();
+  if(!val){alert('Preencha o nome da viatura.');return;}
+  try{
+    await fbDb.ref('viaturas_custom/'+vid).set({name:val});
+    const v=VH.find(x=>x.id===vid);
+    if(v)v.name=val;
+    adminEditingVehName=null;
+    renderAdmin();
+  }catch(e){alert('Erro ao salvar. Verifique sua conexão.');}
+};
 window.syncEfetivo=async()=>{
   const active=allUsers.filter(u=>u.aprovado);
   if(!confirm('Sincronizar efetivo agora?\nIsso vai gravar/atualizar os '+active.length+' militares autorizados no espelho usado pela tela "Quem está conferindo?" do login funcional.'))return;
@@ -1033,6 +1046,7 @@ let adminMovingItem=null;  // {si,ri} — linha aguardando destino
 let adminEditingSection=null; // si — seção com título/ícone em edição inline
 let adminEditingSub=null;  // {si,ri,sj} — subitem em edição inline ('new' em sj = ainda não existe no array)
 let adminDragState=null;   // {kind:'row'|'section', si, ri, srcEl, timer, active, ghost, placeholder, offsetX, offsetY} — drag-and-drop do editor
+let adminEditingVehName=null; // vid — nome da viatura em edição inline (nó `viaturas_custom`)
 // ── Login funcional (celular de serviço) ──
 let sessionResp=null;      // {uid,nome,guerra,rank,re,admin,viaFuncional:true} — responsável selecionado numa conta funcional
 let efetivoList=[];        // [{uid,nome,guerra,rank,re,admin}] — espelho de 'usuarios' legível por não-admin (nó `efetivo`)
@@ -1111,6 +1125,17 @@ async function loadCustomChecklist(){
     if(d&&_validateCustomSC(d)){customSC=d;}
     else if(d){console.warn('CBM: checklist_custom com estrutura inválida — usando padrão.');customSC=null;}
   }catch(e){console.warn('CBM: erro ao carregar checklist_custom',e);}
+}
+async function loadCustomVeiculos(){
+  try{
+    const snap=await fbDb.ref('viaturas_custom').once('value');
+    const d=snap.val()||{};
+    Object.keys(d).forEach(vid=>{
+      const v=VH.find(x=>x.id===vid);
+      const nome=d[vid]&&typeof d[vid].name==='string'?d[vid].name.trim():'';
+      if(v&&nome)v.name=nome;
+    });
+  }catch(e){console.warn('CBM: erro ao carregar viaturas_custom (nó pode não ter regra ainda)',e);}
 }
 // ── Validador estrutural — impede crash por dado malformado no Firebase ──
 function _validateCustomSC(data){
@@ -1456,6 +1481,26 @@ function renderAdmin(){
   ${VH.map(v=>`<button onclick="adminSetVehFilter('${v.id}')" style="white-space:nowrap;border-radius:6px;padding:5px 12px;cursor:pointer;font-size:12px;font-family:'Barlow Condensed',sans-serif;font-weight:700;border:1.5px solid ${adminVehFilter===v.id?v.color:'var(--border)'};background:${adminVehFilter===v.id?v.color:'var(--bg)'};color:${adminVehFilter===v.id?'#fff':'var(--text3)'}">${esc(v.name)}</button>`).join('')}
 </div>`;
 
+  // ── Renomear viatura (só com uma viatura específica filtrada) ──
+  let vehRenameBar='';
+  if(adminVehFilter!=='all'){
+    const veh=VH.find(v=>v.id===adminVehFilter);
+    if(veh){
+      vehRenameBar=adminEditingVehName===adminVehFilter
+        ?`<div class="card" style="margin-bottom:10px">
+    <input id="veh_name_${veh.id}" type="text" value="${esc(veh.name)}" aria-label="Nome da viatura" style="margin-bottom:8px">
+    <div style="display:flex;gap:8px">
+      <button onclick="adminSaveVehName('${veh.id}')" class="btn-red" style="flex:1;padding:9px 0;font-size:13px">${icn('check')} Salvar</button>
+      <button onclick="adminCancelEditVehName()" class="btn-gray" style="flex:1;padding:9px 0;font-size:13px">${icn('x')} Cancelar</button>
+    </div>
+  </div>`
+        :`<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px">
+    <div style="font-size:12px;color:var(--text3)">Editando checklist de <strong style="color:var(--text)">${esc(veh.name)}</strong></div>
+    <button onclick="adminStartEditVehName('${veh.id}')" style="white-space:nowrap;background:transparent;border:1px dashed var(--border);border-radius:8px;padding:6px 10px;color:var(--text2);cursor:pointer;font-size:12px;font-weight:700;font-family:'Barlow Condensed',sans-serif;min-height:32px">${icn('edit',13)} Renomear viatura</button>
+  </div>`;
+    }
+  }
+
   // ── Nova seção ──
   const addSectionBar=`<div style="display:flex;gap:6px;margin-bottom:14px">
   <select id="new-sec-vid" aria-label="Viatura da nova seção" style="flex:1">${VH.map(v=>`<option value="${v.id}" ${adminVehFilter===v.id?'selected':''}>${esc(v.name)}</option>`).join('')}</select>
@@ -1615,6 +1660,7 @@ function renderAdmin(){
   root.innerHTML=`<div class="page">${hdr}${tabs}${vehFilterBar}
 <div style="padding:14px;padding-bottom:90px">
   ${banner}
+  ${vehRenameBar}
   ${addSectionBar}
   <div style="font-size:13px;color:var(--text3);letter-spacing:.3px;margin-bottom:12px;font-family:'Barlow Condensed',sans-serif;display:flex;flex-wrap:wrap;align-items:center;gap:3px">
     ${icn('grip',12)} Arrastar (ou ${icn('arrowUp',11)}${icn('arrowDown',11)}) · ${icn('edit',12)} Editar · ${icn('move',12)} Realocar para outra seção · ${icn('trash',12)} Excluir — mesmas ações valem para seções, títulos, itens e subitens
@@ -2072,6 +2118,7 @@ fbAuth.onAuthStateChanged(async user=>{
     }
     authState='app';
     await loadHistory();
+    await loadCustomVeiculos();
     await loadCustomChecklist();
     load();
     render();

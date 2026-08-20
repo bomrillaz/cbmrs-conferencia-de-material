@@ -34,6 +34,13 @@ Trabalho em português.
   virar seletor fixo e migrar dados já salvos, fora de escopo. `alert()`/`confirm()` nativos e o
   documento standalone de `gerarRelatorio()` (HTML separado, aberto em nova aba) também mantêm emoji —
   são texto puro ou documento à parte, SVG não se aplica.
+- **Renomear viatura (2026-08-20)**: painel admin, aba Checklist, filtrando por uma viatura específica
+  (não "TODAS") mostra botão "Renomear viatura". Grava em `viaturas_custom/{vid}={name}` no RTDB
+  (mesmo padrão de leitura/escrita de `checklist_custom`) e sobrescreve `VH[].name` em runtime via
+  `loadCustomVeiculos()` (chamada no boot, `onAuthStateChanged`, antes de `loadCustomChecklist()`).
+  Só o nome muda — tipo/cor/imagem continuam fixos no array `VH` (`index.html`), fora de escopo.
+  **Regra do RTDB ainda não publicada** — ver `materiais/referencia/regras-rtdb/LEIA-ME.md`
+  (`regras_propostas_com_viaturas.json`); sem ela a função tenta gravar e mostra "Erro ao salvar".
 - Site: https://bomrillaz.github.io/cbmrs-conferencia-de-material/
 - Repo: github.com/bomrillaz/cbmrs-conferencia-de-material, branch `main`.
 - Firebase: projeto `cbmrs-ti`, RTDB `cbmrs-ti-default-rtdb` — **diferente do `ctsp-estudos`**, não
@@ -62,7 +69,9 @@ Trabalho em português.
 
 - **As regras do RTDB são o perímetro real**, não `ADMIN_EMAIL`/`userProfile.admin` no cliente
   (usado só como UX). Regras cobrem `usuarios`, `historico`, `checklist_custom`, `efetivo` — texto
-  completo em `materiais/referencia/regras-rtdb/` (gitignorado) e em `_regras_rtdb.md` do vault. Nó
+  completo em `materiais/referencia/regras-rtdb/` (gitignorado) e em `_regras_rtdb.md` do vault.
+  `viaturas_custom` (renomear viatura) **ainda não está nas regras publicadas** — proposta pronta em
+  `regras_propostas_com_viaturas.json`, falta o João colar no Console. Nó
   `efetivo` publicado em 2026-08-19 (leitura: qualquer aprovado · escrita: só admin), necessário pro
   login funcional listar o efetivo sem a conta funcional precisar ser admin.
 - **`firebase.initializeApp` 1x só.**
@@ -93,7 +102,7 @@ Trabalho em português.
   trivial. Sonnet é o padrão; Opus só na fase de decisão de mudança estrutural.
 - Verificação leve: `bash verify_conferencia.sh` (contagens de `esc()`/`innerHTML`, viaturas presentes,
   sintaxe balanceada). Rodar antes de qualquer commit que toque `index.html`.
-  Baseline 2026-08-20 (pós auditoria estética — ícones SVG + fix de contraste + tipografia): `esc()=95` ·
+  Baseline 2026-08-20 (pós auditoria estética + aria-label + renomear viatura): `esc()=97` ·
   `innerHTML=21` · `initializeApp=1` · `ADMIN_EMAIL=3` · `unsafe-eval=0` · `checkRateLimit=2` ·
   `patchItemStatus=2` · `patchProgress=2`. Divergência = investigar antes de seguir.
   (`innerHTML` subiu 18→21: 3 pontos que trocaram `.textContent` por `.innerHTML` pra caber ícone SVG —
