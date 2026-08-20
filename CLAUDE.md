@@ -25,6 +25,15 @@ Trabalho em português.
   - Tela de login (`renderAuth()`) usa `img/banner.jpg` (foto operacional) + `assets/cesar-coin.png`
     (mascote/logo) — **copiados do repo `bomrillaz-estudos`** por pedido explícito do João, não gerados
     do zero. Se o CTSP trocar esses assets, replicar aqui só se pedido.
+- **Ícones de UI em SVG inline (2026-08-20, auditoria estética)**: objeto `ICONS` + helper `icn(name,
+  size)` (perto de `esc()`, `index.html`) substituem os ~50 emojis de botões/labels fixos no código
+  (editar, excluir, salvar, mover, confirmar etc.) por SVG outline (stroke `currentColor`, sem fill,
+  exceto `grip` que é preenchido). **Exceção deliberada, não migrar sem decisão nova**: `sec.icon` — o
+  ícone de cada seção do checklist é campo de texto livre editado pelo admin (emoji digitado à mão,
+  gravado no RTDB junto com `checklist_custom`) e **continua emoji**, não SVG; migrar isso exigiria
+  virar seletor fixo e migrar dados já salvos, fora de escopo. `alert()`/`confirm()` nativos e o
+  documento standalone de `gerarRelatorio()` (HTML separado, aberto em nova aba) também mantêm emoji —
+  são texto puro ou documento à parte, SVG não se aplica.
 - Site: https://bomrillaz.github.io/cbmrs-conferencia-de-material/
 - Repo: github.com/bomrillaz/cbmrs-conferencia-de-material, branch `main`.
 - Firebase: projeto `cbmrs-ti`, RTDB `cbmrs-ti-default-rtdb` — **diferente do `ctsp-estudos`**, não
@@ -84,9 +93,12 @@ Trabalho em português.
   trivial. Sonnet é o padrão; Opus só na fase de decisão de mudança estrutural.
 - Verificação leve: `bash verify_conferencia.sh` (contagens de `esc()`/`innerHTML`, viaturas presentes,
   sintaxe balanceada). Rodar antes de qualquer commit que toque `index.html`.
-  Baseline 2026-08-19 (pós editor livre + login funcional, v2026.7.0): `esc()=94` · `innerHTML=18` ·
-  `initializeApp=1` · `ADMIN_EMAIL=3` · `unsafe-eval=0` · `checkRateLimit=2` · `patchItemStatus=2` ·
-  `patchProgress=2`. Divergência = investigar antes de seguir.
+  Baseline 2026-08-20 (pós auditoria estética — ícones SVG + fix de contraste + tipografia): `esc()=95` ·
+  `innerHTML=21` · `initializeApp=1` · `ADMIN_EMAIL=3` · `unsafe-eval=0` · `checkRateLimit=2` ·
+  `patchItemStatus=2` · `patchProgress=2`. Divergência = investigar antes de seguir.
+  (`innerHTML` subiu 18→21: 3 pontos que trocaram `.textContent` por `.innerHTML` pra caber ícone SVG —
+  botão salvar checklist (2x) e botão Próxima/Concluir do patch anti-piscada, todos com texto fixo do
+  código, não dado de usuário — não precisam de `esc()`.)
 - **Teste de tela pós-login (home/checklist/admin/resumo) exige login manual do João.** A IA nunca
   digita credencial — abre a aba (navegador embutido do chat) e o João loga; a IA só observa depois.
   Padrão herdado do CTSP: não completar uma conferência de verdade durante o teste, só abrir e conferir
