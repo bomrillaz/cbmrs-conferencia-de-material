@@ -330,7 +330,7 @@ window.loadAdmin=async()=>{
   const snap=await fbDb.ref('usuarios').once('value');
   allUsers=[];
   snap.forEach(c=>{allUsers.push({uid:c.key,...c.val()});});
-  if(adminTab==='checklist'&&!editingSC)editingSC=JSON.parse(JSON.stringify(getSC()));
+  if(adminTab==='checklist'&&!editingSC)editingSC=toEditableSC();
   setState({screen:'admin'});
 };
 window.approveUser=async(uid)=>{
@@ -382,67 +382,152 @@ window.updateUserProfile=async(uid)=>{
 // ════════════════════════════════════
 window.adminSetTab=tab=>{
   adminTab=tab;
-  if(tab==='checklist'&&!editingSC)editingSC=JSON.parse(JSON.stringify(getSC()));
-  adminEditingItem=null;adminMovingItem=null;
+  if(tab==='checklist'&&!editingSC)editingSC=toEditableSC();
+  adminEditingItem=null;adminMovingItem=null;adminEditingSection=null;adminEditingSub=null;
   renderAdmin();
 };
 window.adminSetVehFilter=vid=>{
   adminVehFilter=vid;
+  adminEditingItem=null;adminMovingItem=null;adminEditingSection=null;adminEditingSub=null;
+  renderAdmin();
+};
+
+// ── Seções ──
+window.adminAddSection=vid=>{
+  editingSC.push({id:'sec_'+_uid(),vid,title:'NOVA SEÇÃO',icon:'📦',rows:[]});
+  const si=editingSC.length-1;
+  adminEditingSection=si;adminEditingItem=null;adminMovingItem=null;
+  renderAdmin();
+  setTimeout(()=>document.getElementById('edit_sec_title_'+si)?.focus(),80);
+};
+window.adminStartEditSection=si=>{
+  adminEditingSection=si;adminEditingItem=null;adminMovingItem=null;
+  renderAdmin();
+  setTimeout(()=>document.getElementById('edit_sec_title_'+si)?.focus(),80);
+};
+window.adminSaveEditSection=si=>{
+  const titleEl=document.getElementById('edit_sec_title_'+si);
+  const iconEl=document.getElementById('edit_sec_icon_'+si);
+  const title=titleEl?.value?.trim();
+  if(!title)return;
+  editingSC[si].title=title;
+  editingSC[si].icon=iconEl?.value?.trim()||editingSC[si].icon||'📦';
+  adminEditingSection=null;renderAdmin();
+};
+window.adminCancelEditSection=()=>{adminEditingSection=null;renderAdmin();};
+window.adminDeleteSection=si=>{
+  const sec=editingSC[si],n=sec.rows.length;
+  if(!confirm(n?`Excluir a seção "${sec.title}" e ${n} linha(s) dentro dela? Não pode ser desfeito.`:`Excluir a seção "${sec.title}"?`))return;
+  editingSC.splice(si,1);
+  adminEditingItem=null;adminMovingItem=null;adminEditingSection=null;renderAdmin();
+};
+window.adminMoveSection=(si,dir)=>{
+  const ni=si+dir;
+  if(ni<0||ni>=editingSC.length)return;
+  [editingSC[si],editingSC[ni]]=[editingSC[ni],editingSC[si]];
+  renderAdmin();
+};
+
+// ── Linhas (item ou título) ──
+window.adminMoveItem=(si,ri,dir)=>{
+  const rows=editingSC[si].rows;
+  const ni=ri+dir;
+  if(ni<0||ni>=rows.length)return;
+  [rows[ri],rows[ni]]=[rows[ni],rows[ri]];
   adminEditingItem=null;adminMovingItem=null;
   renderAdmin();
 };
-window.adminMoveItem=(si,ii,dir)=>{
-  const items=editingSC[si].items;
-  const ni=ii+dir;
-  if(ni<0||ni>=items.length)return;
-  [items[ii],items[ni]]=[items[ni],items[ii]];
+window.adminDeleteItem=(si,ri)=>{
+  if(!confirm('Excluir esta linha do checklist?'))return;
+  editingSC[si].rows.splice(ri,1);
   adminEditingItem=null;adminMovingItem=null;
   renderAdmin();
 };
-window.adminDeleteItem=(si,ii)=>{
-  if(!confirm('Excluir este item do checklist?'))return;
-  editingSC[si].items.splice(ii,1);
-  adminEditingItem=null;adminMovingItem=null;
+window.adminStartEdit=(si,ri)=>{
+  adminEditingItem={si,ri};adminMovingItem=null;
   renderAdmin();
+  setTimeout(()=>document.getElementById('edit_name_'+si+'_'+ri)?.focus(),80);
 };
-window.adminStartEdit=(si,ii)=>{
-  adminEditingItem={si,ii};adminMovingItem=null;
-  renderAdmin();
-  setTimeout(()=>document.getElementById('edit_name_'+si+'_'+ii)?.focus(),80);
-};
-window.adminSaveEdit=(si,ii)=>{
-  const nameEl=document.getElementById('edit_name_'+si+'_'+ii);
-  const qtyEl=document.getElementById('edit_qty_'+si+'_'+ii);
+window.adminSaveEdit=(si,ri)=>{
+  const row=editingSC[si].rows[ri];
+  const nameEl=document.getElementById('edit_name_'+si+'_'+ri);
   const name=nameEl?.value?.trim();
-  const qty=qtyEl?.value?.trim();
   if(!name)return;
-  editingSC[si].items[ii]=[name,qty||'—'];
+  row.name=name;
+  if(row.t==='i'){
+    const qtyEl=document.getElementById('edit_qty_'+si+'_'+ri);
+    row.qty=qtyEl?.value?.trim()||'—';
+  }
   adminEditingItem=null;renderAdmin();
 };
 window.adminCancelEdit=()=>{adminEditingItem=null;adminMovingItem=null;renderAdmin();};
-window.adminStartMove=(si,ii)=>{
-  adminMovingItem=(adminMovingItem?.si===si&&adminMovingItem?.ii===ii)?null:{si,ii};
+window.adminStartMove=(si,ri)=>{
+  adminMovingItem=(adminMovingItem?.si===si&&adminMovingItem?.ri===ri)?null:{si,ri};
   adminEditingItem=null;renderAdmin();
 };
 window.adminMoveToSection=destSi=>{
   if(!adminMovingItem)return;
-  const{si,ii}=adminMovingItem;
-  const[item]=editingSC[si].items.splice(ii,1);
-  editingSC[destSi].items.push(item);
+  const{si,ri}=adminMovingItem;
+  const[row]=editingSC[si].rows.splice(ri,1);
+  editingSC[destSi].rows.push(row);
   adminMovingItem=null;renderAdmin();
 };
-window.adminAddItem=si=>{
-  editingSC[si].items.push(['Novo item','1 UN']);
-  adminEditingItem={si,ii:editingSC[si].items.length-1};
-  adminMovingItem=null;renderAdmin();
-  setTimeout(()=>document.getElementById('edit_name_'+si+'_'+(editingSC[si].items.length-1))?.focus(),80);
+window.adminAddItem=(si,type)=>{
+  const t=type==='h'?'h':'i';
+  const row=t==='h'?{t:'h',id:_uid(),name:'NOVO TÍTULO'}:{t:'i',id:_uid(),name:'Novo item',qty:'1 UN'};
+  editingSC[si].rows.push(row);
+  const ri=editingSC[si].rows.length-1;
+  adminEditingItem={si,ri};adminMovingItem=null;
+  renderAdmin();
+  setTimeout(()=>document.getElementById('edit_name_'+si+'_'+ri)?.focus(),80);
 };
+
+// ── Subitens ──
+window.adminAddSub=(si,ri)=>{
+  const row=editingSC[si].rows[ri];
+  if(!row.subs)row.subs=[];
+  row.subs.push({id:_uid(),name:'Novo subitem',qty:'',chk:false});
+  const sj=row.subs.length-1;
+  adminEditingSub={si,ri,sj};adminEditingItem=null;adminMovingItem=null;
+  renderAdmin();
+  setTimeout(()=>document.getElementById('edit_sub_name_'+si+'_'+ri+'_'+sj)?.focus(),80);
+};
+window.adminStartEditSub=(si,ri,sj)=>{
+  adminEditingSub={si,ri,sj};adminEditingItem=null;adminMovingItem=null;
+  renderAdmin();
+  setTimeout(()=>document.getElementById('edit_sub_name_'+si+'_'+ri+'_'+sj)?.focus(),80);
+};
+window.adminSaveEditSub=(si,ri,sj)=>{
+  const nameEl=document.getElementById('edit_sub_name_'+si+'_'+ri+'_'+sj);
+  const qtyEl=document.getElementById('edit_sub_qty_'+si+'_'+ri+'_'+sj);
+  const name=nameEl?.value?.trim();
+  if(!name)return;
+  const sub=editingSC[si].rows[ri].subs[sj];
+  sub.name=name;sub.qty=qtyEl?.value?.trim()||'';
+  adminEditingSub=null;renderAdmin();
+};
+window.adminCancelEditSub=()=>{adminEditingSub=null;renderAdmin();};
+window.adminDeleteSub=(si,ri,sj)=>{
+  if(!confirm('Excluir este subitem?'))return;
+  const row=editingSC[si].rows[ri];
+  row.subs.splice(sj,1);
+  if(!row.subs.length)delete row.subs;
+  adminEditingSub=null;renderAdmin();
+};
+
 window.adminSaveChecklist=async()=>{
   const btn=document.getElementById('btn-save-ck');
   if(btn){btn.disabled=true;btn.textContent='💾 Salvando...';}
   try{
-    await fbDb.ref('checklist_custom').set(editingSC);
-    customSC=JSON.parse(JSON.stringify(editingSC));
+    // Dual-write: `rows` é a verdade; `items` é o espelho achatado pro cliente PWA com bundle
+    // antigo em cache não cair silenciosamente no checklist de fábrica (plano §2.4).
+    const payload=editingSC.map(sec=>({
+      id:sec.id,vid:sec.vid,title:sec.title,icon:sec.icon,
+      rows:sec.rows,
+      items:sec.rows.filter(r=>r.t==='i').map(r=>[r.name,r.qty||'—'])
+    }));
+    await fbDb.ref('checklist_custom').set(payload);
+    customSC=JSON.parse(JSON.stringify(payload));
     alert('✅ Checklist salvo! Todas as guarnições verão as alterações.');
     renderAdmin();
   }catch(e){
@@ -460,7 +545,7 @@ window.adminResetChecklist=()=>{
       try{
         await fbDb.ref('checklist_custom').remove();
         customSC=null;
-        editingSC=JSON.parse(JSON.stringify(SC));
+        editingSC=toEditableSC();
         renderAdmin();
       }catch(e){alert('Erro ao restaurar.');}
     }
@@ -724,9 +809,11 @@ let _parteGerada=false;
 let customSC=null;         // override carregado do Firebase
 let adminTab='users';      // 'users' | 'checklist'
 let adminVehFilter='all';
-let editingSC=null;        // cópia mutável em edição
-let adminEditingItem=null; // {si,ii} — item em edição inline
-let adminMovingItem=null;  // {si,ii} — item aguardando destino
+let editingSC=null;        // cópia mutável em edição (sempre em formato {rows:[...]})
+let adminEditingItem=null; // {si,ri} — linha (item/título) em edição inline
+let adminMovingItem=null;  // {si,ri} — linha aguardando destino
+let adminEditingSection=null; // si — seção com título/ícone em edição inline
+let adminEditingSub=null;  // {si,ri,sj} — subitem em edição inline ('new' em sj = ainda não existe no array)
 
 // ════════════════════════════════════
 //  STATE MANAGEMENT — setState(patch)
@@ -850,6 +937,15 @@ function secRows(s){
 }
 const secChecks=s=>secRows(s).filter(r=>r.t==='i');
 const rowKey=(s,r)=>`${s.id}_${r.id}`;
+const _uid=()=>'x'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+// Cópia editável independente do cache de secRows — usada só pelo editor admin.
+function toEditableSC(){
+  return getSC().map(sec=>({
+    id:sec.id,vid:sec.vid,title:sec.title,icon:sec.icon,
+    rows:secRows(sec).map(r=>({t:r.t,id:r.id,name:r.name,qty:r.qty,
+      subs:Array.isArray(r.subs)?r.subs.map(sb=>({id:String(sb&&sb.id!=null?sb.id:_uid()),name:sb&&sb.name||'',qty:sb&&sb.qty||'',chk:!!(sb&&sb.chk)})):undefined}))
+  }));
+}
 function getProg(){let d=0,t=0;getAct().forEach(s=>secChecks(s).forEach(r=>{t++;if(responses[rowKey(s,r)]?.status==='ok')d++;}));return{done:d,total:t,pct:t?Math.round(d/t*100):0};}
 function secProg(s){const rows=secChecks(s);let d=0;rows.forEach(r=>{if(responses[rowKey(s,r)]?.status)d++;});return{done:d,total:rows.length};}
 function getNCs(){const ncs=[];getAct().forEach(s=>secChecks(s).forEach(r=>{const rr=responses[rowKey(s,r)];if(rr?.status==='nc'){const v=VH.find(v=>v.id===s.vid);ncs.push({veh:v.name,sec:s.title,name:r.name,qty:r.qty,obs:rr.obs||''});}}));return ncs;}
@@ -1030,7 +1126,7 @@ function renderAdmin(){
   // ════════════════
   //  ABA: CHECKLIST
   // ════════════════
-  if(!editingSC)editingSC=JSON.parse(JSON.stringify(getSC()));
+  if(!editingSC)editingSC=toEditableSC();
 
   // ── Filtro de viatura ──
   const vehFilterBar=`<div style="display:flex;gap:6px;overflow-x:auto;padding:10px 14px;border-bottom:1px solid var(--border);background:var(--bg);-webkit-overflow-scrolling:touch;scrollbar-width:none">
@@ -1038,7 +1134,13 @@ function renderAdmin(){
   ${VH.map(v=>`<button onclick="adminSetVehFilter('${v.id}')" style="white-space:nowrap;border-radius:6px;padding:5px 12px;cursor:pointer;font-size:12px;font-family:'Barlow Condensed',sans-serif;font-weight:700;border:1.5px solid ${adminVehFilter===v.id?v.color:'var(--border)'};background:${adminVehFilter===v.id?v.color:'var(--bg)'};color:${adminVehFilter===v.id?'#fff':'var(--text3)'}">${esc(v.name)}</button>`).join('')}
 </div>`;
 
-  // ── Seções e itens ──
+  // ── Nova seção ──
+  const addSectionBar=`<div style="display:flex;gap:6px;margin-bottom:14px">
+  <select id="new-sec-vid" style="flex:1">${VH.map(v=>`<option value="${v.id}" ${adminVehFilter===v.id?'selected':''}>${esc(v.name)}</option>`).join('')}</select>
+  <button onclick="adminAddSection(document.getElementById('new-sec-vid').value)" class="btn-red" style="white-space:nowrap;padding:0 14px;font-size:13px">＋ Nova Seção</button>
+</div>`;
+
+  // ── Seções, linhas (item/título) e subitens ──
   let sectionsHTML='';
   editingSC.forEach((sec,si)=>{
     if(adminVehFilter!=='all'&&sec.vid!==adminVehFilter)return;
@@ -1046,17 +1148,18 @@ function renderAdmin(){
     if(!veh)return; // vid inválido — seção ignorada, nunca trava
     let itemsHTML='';
 
-    sec.items.forEach(([name,qty],ii)=>{
-      const isEd=adminEditingItem?.si===si&&adminEditingItem?.ii===ii;
-      const isMv=adminMovingItem?.si===si&&adminMovingItem?.ii===ii;
-      const isFirst=ii===0, isLast=ii===sec.items.length-1;
+    sec.rows.forEach((row,ri)=>{
+      const isEd=adminEditingItem?.si===si&&adminEditingItem?.ri===ri;
+      const isMv=adminMovingItem?.si===si&&adminMovingItem?.ri===ri;
+      const isFirst=ri===0, isLast=ri===sec.rows.length-1;
+      const isTitle=row.t==='h';
 
       if(isEd){
         itemsHTML+=`<div style="background:var(--red-light);border:1px solid var(--red);border-radius:8px;padding:10px;margin-bottom:6px">
-  <input id="edit_name_${si}_${ii}" type="text" value="${esc(name)}" placeholder="Nome do item" style="margin-bottom:6px">
-  <input id="edit_qty_${si}_${ii}" type="text" value="${esc(qty)}" placeholder="Quantidade" style="color:var(--ember-deep);margin-bottom:8px">
+  <input id="edit_name_${si}_${ri}" type="text" value="${esc(row.name)}" placeholder="${isTitle?'Texto do título':'Nome do item'}" style="margin-bottom:6px">
+  ${isTitle?'':`<input id="edit_qty_${si}_${ri}" type="text" value="${esc(row.qty||'')}" placeholder="Quantidade" style="color:var(--ember-deep);margin-bottom:8px">`}
   <div style="display:flex;gap:6px">
-    <button onclick="adminSaveEdit(${si},${ii})" class="btn-red" style="flex:1;padding:8px 0;font-size:13px">✓ Salvar</button>
+    <button onclick="adminSaveEdit(${si},${ri})" class="btn-red" style="flex:1;padding:8px 0;font-size:13px">✓ Salvar</button>
     <button onclick="adminCancelEdit()" class="btn-gray" style="flex:1;padding:8px 0;font-size:13px">Cancelar</button>
   </div>
 </div>`;
@@ -1069,7 +1172,7 @@ function renderAdmin(){
             const ov=VH.find(v=>v.id===os.vid);
             if(!ov)return''; // vid inválido — destino ignorado
             return`<button onclick="adminMoveToSection(${osi})" style="display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 10px;cursor:pointer;color:var(--text);text-align:left;touch-action:manipulation;width:100%">
-  <span style="font-size:16px">${os.icon}</span>
+  <span style="font-size:16px">${esc(os.icon)}</span>
   <div>
     <div style="font-size:9px;color:var(--ember-deep);text-transform:uppercase;letter-spacing:.5px;font-family:'Barlow Condensed',sans-serif">${esc(ov.name)}</div>
     <div style="font-size:13px;font-weight:700;font-family:'Barlow Condensed',sans-serif">${esc(os.title)}</div>
@@ -1083,41 +1186,104 @@ function renderAdmin(){
 </div>`;
         }
 
-        itemsHTML+=`${mvPanel}<div style="display:flex;align-items:center;gap:6px;padding:8px 10px;border-radius:8px;margin-bottom:4px;background:${isMv?'var(--amber-light)':'var(--surface)'};border:1px solid ${isMv?'var(--ember-deep)':'var(--border)'}">
-  <div style="display:flex;flex-direction:column;gap:2px;flex-shrink:0">
-    <button onclick="adminMoveItem(${si},${ii},-1)" ${isFirst?'disabled':''} style="background:${isFirst?'transparent':'var(--border)'};border:none;color:${isFirst?'var(--border)':'var(--text2)'};border-radius:4px;width:28px;height:22px;cursor:${isFirst?'default':'pointer'};font-size:13px;line-height:1;touch-action:manipulation">↑</button>
-    <button onclick="adminMoveItem(${si},${ii},1)" ${isLast?'disabled':''} style="background:${isLast?'transparent':'var(--border)'};border:none;color:${isLast?'var(--border)':'var(--text2)'};border-radius:4px;width:28px;height:22px;cursor:${isLast?'default':'pointer'};font-size:13px;line-height:1;touch-action:manipulation">↓</button>
-  </div>
-  <div style="flex:1;min-width:0;overflow:hidden">
-    <div style="font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(name)}</div>
-    <div style="font-size:10px;color:var(--ember-deep);font-family:'Barlow Condensed',sans-serif;margin-top:1px">${esc(qty)}</div>
-  </div>
-  <div style="display:flex;gap:4px;flex-shrink:0">
-    <button onclick="adminStartEdit(${si},${ii})" title="Editar" style="background:var(--border);border:none;color:var(--text2);border-radius:6px;width:32px;height:32px;cursor:pointer;font-size:13px;touch-action:manipulation">✏</button>
-    <button onclick="adminStartMove(${si},${ii})" title="Realocar" style="background:${isMv?'rgba(194,138,32,.25)':'var(--border)'};border:1px solid ${isMv?'var(--ember-deep)':'transparent'};color:${isMv?'var(--ember)':'var(--text2)'};border-radius:6px;width:32px;height:32px;cursor:pointer;font-size:15px;touch-action:manipulation">↗</button>
-    <button onclick="adminDeleteItem(${si},${ii})" title="Excluir" style="background:var(--red-light);border:none;color:var(--red);border-radius:6px;width:32px;height:32px;cursor:pointer;font-size:13px;touch-action:manipulation">✕</button>
+        // ── Subitens (só linhas do tipo item) ──
+        let subsHTML='';
+        if(!isTitle){
+          if(row.subs&&row.subs.length){
+            subsHTML+=`<div style="margin-top:6px;padding-left:10px;border-left:2px solid var(--border)">`;
+            row.subs.forEach((sb,sj)=>{
+              const isEdSub=adminEditingSub?.si===si&&adminEditingSub?.ri===ri&&adminEditingSub?.sj===sj;
+              if(isEdSub){
+                subsHTML+=`<div style="background:var(--red-light);border:1px solid var(--red);border-radius:6px;padding:8px;margin-bottom:4px">
+  <input id="edit_sub_name_${si}_${ri}_${sj}" type="text" value="${esc(sb.name)}" placeholder="Nome do subitem" style="margin-bottom:4px;font-size:12px;padding:8px 10px">
+  <input id="edit_sub_qty_${si}_${ri}_${sj}" type="text" value="${esc(sb.qty||'')}" placeholder="Quantidade (opcional)" style="color:var(--ember-deep);margin-bottom:6px;font-size:12px;padding:8px 10px">
+  <div style="display:flex;gap:6px">
+    <button onclick="adminSaveEditSub(${si},${ri},${sj})" class="btn-red" style="flex:1;padding:6px 0;font-size:12px">✓ Salvar</button>
+    <button onclick="adminCancelEditSub()" class="btn-gray" style="flex:1;padding:6px 0;font-size:12px">Cancelar</button>
   </div>
 </div>`;
+              } else {
+                subsHTML+=`<div style="display:flex;align-items:center;gap:6px;padding:3px 0">
+  <div style="flex:1;font-size:12px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(sb.name)}${sb.qty?` <span style="color:var(--text3);font-size:11px">(${esc(sb.qty)})</span>`:''}</div>
+  <button onclick="adminStartEditSub(${si},${ri},${sj})" title="Editar subitem" style="background:var(--border);border:none;color:var(--text2);border-radius:5px;width:28px;height:28px;font-size:11px;cursor:pointer;flex-shrink:0;touch-action:manipulation">✏</button>
+  <button onclick="adminDeleteSub(${si},${ri},${sj})" title="Excluir subitem" style="background:var(--red-light);border:none;color:var(--red);border-radius:5px;width:28px;height:28px;font-size:11px;cursor:pointer;flex-shrink:0;touch-action:manipulation">✕</button>
+</div>`;
+              }
+            });
+            subsHTML+=`</div>`;
+          }
+          subsHTML+=`<button onclick="adminAddSub(${si},${ri})" style="background:transparent;border:none;color:var(--ember-deep);font-size:11px;cursor:pointer;padding:4px 0 0 10px;font-family:'Barlow Condensed',sans-serif;min-height:28px">＋ subitem</button>`;
+        }
+
+        const moveBtns=`<div style="display:flex;flex-direction:column;gap:2px;flex-shrink:0">
+    <button onclick="adminMoveItem(${si},${ri},-1)" ${isFirst?'disabled':''} style="background:${isFirst?'transparent':'var(--border)'};border:none;color:${isFirst?'var(--border)':'var(--text2)'};border-radius:4px;width:30px;height:26px;cursor:${isFirst?'default':'pointer'};font-size:13px;line-height:1;touch-action:manipulation">↑</button>
+    <button onclick="adminMoveItem(${si},${ri},1)" ${isLast?'disabled':''} style="background:${isLast?'transparent':'var(--border)'};border:none;color:${isLast?'var(--border)':'var(--text2)'};border-radius:4px;width:30px;height:26px;cursor:${isLast?'default':'pointer'};font-size:13px;line-height:1;touch-action:manipulation">↓</button>
+  </div>`;
+        const actionBtns=`<div style="display:flex;gap:4px;flex-shrink:0">
+    <button onclick="adminStartEdit(${si},${ri})" title="Editar" style="background:var(--border);border:none;color:var(--text2);border-radius:6px;width:36px;height:36px;cursor:pointer;font-size:13px;touch-action:manipulation">✏</button>
+    <button onclick="adminStartMove(${si},${ri})" title="Realocar" style="background:${isMv?'rgba(194,138,32,.25)':'var(--border)'};border:1px solid ${isMv?'var(--ember-deep)':'transparent'};color:${isMv?'var(--ember)':'var(--text2)'};border-radius:6px;width:36px;height:36px;cursor:pointer;font-size:15px;touch-action:manipulation">↗</button>
+    <button onclick="adminDeleteItem(${si},${ri})" title="Excluir" style="background:var(--red-light);border:none;color:var(--red);border-radius:6px;width:36px;height:36px;cursor:pointer;font-size:13px;touch-action:manipulation">✕</button>
+  </div>`;
+
+        if(isTitle){
+          itemsHTML+=`${mvPanel}<div style="display:flex;align-items:center;gap:6px;padding:8px 4px;margin:10px 0 4px;border-bottom:1.5px solid var(--border);background:${isMv?'var(--amber-light)':'transparent'}">
+  ${moveBtns}
+  <div style="flex:1;font-size:12px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--text3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(row.name)}</div>
+  ${actionBtns}
+</div>`;
+        } else {
+          itemsHTML+=`${mvPanel}<div style="display:flex;align-items:flex-start;gap:6px;padding:8px 10px;border-radius:8px;margin-bottom:4px;background:${isMv?'var(--amber-light)':'var(--surface)'};border:1px solid ${isMv?'var(--ember-deep)':'var(--border)'}">
+  ${moveBtns}
+  <div style="flex:1;min-width:0;overflow:hidden">
+    <div style="font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(row.name)}</div>
+    <div style="font-size:10px;color:var(--ember-deep);font-family:'Barlow Condensed',sans-serif;margin-top:1px">${esc(row.qty)}</div>
+    ${subsHTML}
+  </div>
+  ${actionBtns}
+</div>`;
+        }
       }
     });
 
-    sectionsHTML+=`<div class="card" style="margin-bottom:10px;border-left:3px solid ${veh.color}">
-  <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
-    <span style="font-size:20px">${sec.icon}</span>
-    <div style="flex:1">
-      <div style="font-size:9px;color:var(--ember-deep);text-transform:uppercase;letter-spacing:1.5px;font-family:'Barlow Condensed',sans-serif">${esc(veh.name)} · ${esc(veh.type)}</div>
-      <div style="font-size:16px;font-weight:900;font-family:'Barlow Condensed',sans-serif;color:var(--text);letter-spacing:.5px">${esc(sec.title)}</div>
-    </div>
-    <div style="font-size:11px;color:var(--text3);background:var(--paper);border-radius:4px;padding:2px 8px;font-family:'Barlow Condensed',sans-serif">${sec.items.length} itens</div>
+    const itemCount=sec.rows.filter(r=>r.t==='i').length;
+    const isEdSec=adminEditingSection===si;
+    const secHeader=isEdSec
+      ?`<div style="display:flex;gap:8px;margin-bottom:10px">
+    <input id="edit_sec_icon_${si}" type="text" value="${esc(sec.icon||'')}" placeholder="🔧" style="width:56px;text-align:center;font-size:18px">
+    <input id="edit_sec_title_${si}" type="text" value="${esc(sec.title)}" placeholder="Título da seção" style="flex:1">
   </div>
+  <div style="display:flex;gap:6px;margin-bottom:10px">
+    <button onclick="adminSaveEditSection(${si})" class="btn-red" style="flex:1;padding:8px 0;font-size:13px">✓ Salvar</button>
+    <button onclick="adminCancelEditSection()" class="btn-gray" style="flex:1;padding:8px 0;font-size:13px">Cancelar</button>
+  </div>`
+      :`<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+    <span style="font-size:20px">${esc(sec.icon)}</span>
+    <div style="flex:1;min-width:0">
+      <div style="font-size:9px;color:var(--ember-deep);text-transform:uppercase;letter-spacing:1.5px;font-family:'Barlow Condensed',sans-serif">${esc(veh.name)} · ${esc(veh.type)}</div>
+      <div style="font-size:16px;font-weight:900;font-family:'Barlow Condensed',sans-serif;color:var(--text);letter-spacing:.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(sec.title)}</div>
+    </div>
+    <div style="font-size:11px;color:var(--text3);background:var(--paper);border-radius:4px;padding:2px 8px;font-family:'Barlow Condensed',sans-serif;flex-shrink:0">${itemCount} itens</div>
+    <div style="display:flex;flex-direction:column;gap:2px;flex-shrink:0">
+      <button onclick="adminMoveSection(${si},-1)" ${si===0?'disabled':''} title="Mover seção para cima" style="background:${si===0?'transparent':'var(--border)'};border:none;color:${si===0?'var(--border)':'var(--text2)'};border-radius:4px;width:26px;height:22px;cursor:${si===0?'default':'pointer'};font-size:12px;line-height:1;touch-action:manipulation">↑</button>
+      <button onclick="adminMoveSection(${si},1)" ${si===editingSC.length-1?'disabled':''} title="Mover seção para baixo" style="background:${si===editingSC.length-1?'transparent':'var(--border)'};border:none;color:${si===editingSC.length-1?'var(--border)':'var(--text2)'};border-radius:4px;width:26px;height:22px;cursor:${si===editingSC.length-1?'default':'pointer'};font-size:12px;line-height:1;touch-action:manipulation">↓</button>
+    </div>
+    <button onclick="adminStartEditSection(${si})" title="Renomear seção" style="background:var(--border);border:none;color:var(--text2);border-radius:6px;width:36px;height:36px;cursor:pointer;font-size:13px;touch-action:manipulation;flex-shrink:0">✏</button>
+    <button onclick="adminDeleteSection(${si})" title="Excluir seção" style="background:var(--red-light);border:none;color:var(--red);border-radius:6px;width:36px;height:36px;cursor:pointer;font-size:13px;touch-action:manipulation;flex-shrink:0">✕</button>
+  </div>`;
+
+    sectionsHTML+=`<div class="card" style="margin-bottom:10px;border-left:3px solid ${veh.color}">
+  ${secHeader}
   ${itemsHTML}
-  <button onclick="adminAddItem(${si})" style="width:100%;background:transparent;border:1.5px dashed var(--border);border-radius:8px;padding:9px;color:var(--text3);cursor:pointer;font-size:12px;font-family:'Barlow Condensed',sans-serif;letter-spacing:.5px;margin-top:4px;touch-action:manipulation">＋ ADICIONAR ITEM</button>
+  <div style="display:flex;gap:8px;margin-top:4px">
+    <button onclick="adminAddItem(${si},'i')" style="flex:1;background:transparent;border:1.5px dashed var(--border);border-radius:8px;padding:9px;color:var(--text3);cursor:pointer;font-size:12px;font-family:'Barlow Condensed',sans-serif;letter-spacing:.5px;touch-action:manipulation">＋ ITEM</button>
+    <button onclick="adminAddItem(${si},'h')" style="flex:1;background:transparent;border:1.5px dashed var(--border);border-radius:8px;padding:9px;color:var(--text3);cursor:pointer;font-size:12px;font-family:'Barlow Condensed',sans-serif;letter-spacing:.5px;touch-action:manipulation">＋ TÍTULO</button>
+  </div>
 </div>`;
   });
 
   // ── Status banner ──
-  const totalItens=editingSC.reduce((a,s)=>a+s.items.length,0);
-  const hasChanges=JSON.stringify(editingSC)!==JSON.stringify(getSC());
+  const totalItens=editingSC.reduce((a,s)=>a+s.rows.filter(r=>r.t==='i').length,0);
+  const hasChanges=JSON.stringify(editingSC)!==JSON.stringify(toEditableSC());
   const banner=customSC
     ?`<div style="background:var(--green-light);border:1px solid var(--green);border-radius:8px;padding:10px;margin-bottom:12px;font-size:12px;color:var(--green)">✅ Checklist personalizado ativo · ${totalItens} itens em ${editingSC.length} seções</div>`
     :`<div style="background:var(--amber-light);border:1px solid var(--amber);border-radius:8px;padding:10px;margin-bottom:12px;font-size:12px;color:var(--amber-light)">⚠ Checklist padrão em uso. Edite e salve para personalizar permanentemente.</div>`;
@@ -1125,8 +1291,9 @@ function renderAdmin(){
   root.innerHTML=`<div class="page">${hdr}${tabs}${vehFilterBar}
 <div style="padding:14px;padding-bottom:90px">
   ${banner}
+  ${addSectionBar}
   <div style="font-size:10px;color:var(--text3);letter-spacing:.5px;margin-bottom:12px;font-family:'Barlow Condensed',sans-serif">
-    ↑↓ Reordenar · ✏ Editar · ↗ Realocar para outra seção · ✕ Excluir
+    ↑↓ Reordenar · ✏ Editar · ↗ Realocar para outra seção · ✕ Excluir — mesmas ações valem para seções, títulos, itens e subitens
   </div>
   ${sectionsHTML||'<div style="text-align:center;padding:40px 0;color:var(--text3)">Nenhuma seção encontrada para este filtro.</div>'}
 </div>
@@ -1265,7 +1432,7 @@ ${!identOk()?`<div style="background:var(--amber-light);border:1px solid var(--a
 ${ncs.length?`<div style="color:var(--red);margin-top:6px;font-size:13px">⚠ ${ncs.length} não conformidade(s)</div>`:''}
 </div>
 <div class="card"><div class="label">Progresso por Seção</div>
-${getAct().map((s,i)=>{const sp=secProg(s),veh=VH.find(v=>v.id===s.vid),p=sp.total?Math.round(sp.done/sp.total*100):0;return`<div onclick="goSection(${i})" style="display:flex;align-items:center;gap:10px;padding:8px;border-radius:8px;cursor:pointer;margin-bottom:4px;background:${p===100?'var(--green-light)':'var(--paper)'};border:1px solid ${p===100?'var(--green)':'var(--border)'}"><span style="font-size:14px">${s.icon}</span><div style="flex:1"><div style="font-size:12px;font-weight:700">${esc(veh.name)} — ${esc(s.title)}</div><div style="height:3px;background:var(--border);border-radius:2px;margin-top:4px"><div style="height:3px;background:${p===100?'var(--green)':'var(--red)'};border-radius:2px;width:${p}%"></div></div></div><div style="font-size:11px;color:var(--text3);white-space:nowrap">${sp.done}/${sp.total}</div></div>`;}).join('')}
+${getAct().map((s,i)=>{const sp=secProg(s),veh=VH.find(v=>v.id===s.vid),p=sp.total?Math.round(sp.done/sp.total*100):0;return`<div onclick="goSection(${i})" style="display:flex;align-items:center;gap:10px;padding:8px;border-radius:8px;cursor:pointer;margin-bottom:4px;background:${p===100?'var(--green-light)':'var(--paper)'};border:1px solid ${p===100?'var(--green)':'var(--border)'}"><span style="font-size:14px">${esc(s.icon)}</span><div style="flex:1"><div style="font-size:12px;font-weight:700">${esc(veh.name)} — ${esc(s.title)}</div><div style="height:3px;background:var(--border);border-radius:2px;margin-top:4px"><div style="height:3px;background:${p===100?'var(--green)':'var(--red)'};border-radius:2px;width:${p}%"></div></div></div><div style="font-size:11px;color:var(--text3);white-space:nowrap">${sp.done}/${sp.total}</div></div>`;}).join('')}
 </div>
 ${ncs.length?`<div class="card" style="border-left:3px solid var(--red)"><div class="label" style="color:var(--red)">Não Conformidades (${ncs.length})</div>${ncs.map(nc=>`<div class="nc-item"><div style="font-size:11px;color:var(--red)">${nc.veh==='SOP'?'Sala':esc(nc.veh)} — ${esc(nc.sec)}</div><div style="font-weight:600;font-size:14px">${esc(nc.name)}</div>${nc.obs?`<div style="font-size:11px;color:var(--red-dark);margin-top:4px">› ${esc(nc.obs)}</div>`:''}</div>`).join('')}</div>`:''}
 <button onclick="gerarRelatorio()" class="btn-red">📥 GERAR RELATÓRIO (HTML)</button>
