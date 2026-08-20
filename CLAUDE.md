@@ -39,8 +39,7 @@ Trabalho em português.
   (mesmo padrão de leitura/escrita de `checklist_custom`) e sobrescreve `VH[].name` em runtime via
   `loadCustomVeiculos()` (chamada no boot, `onAuthStateChanged`, antes de `loadCustomChecklist()`).
   Só o nome muda — tipo/cor/imagem continuam fixos no array `VH` (`index.html`), fora de escopo.
-  **Regra do RTDB ainda não publicada** — ver `materiais/referencia/regras-rtdb/LEIA-ME.md`
-  (`regras_propostas_com_viaturas.json`); sem ela a função tenta gravar e mostra "Erro ao salvar".
+  Regra do RTDB publicada pelo João em 2026-08-20 (`regras_propostas_com_viaturas.json`).
 - Site: https://bomrillaz.github.io/cbmrs-conferencia-de-material/
 - Repo: github.com/bomrillaz/cbmrs-conferencia-de-material, branch `main`.
 - Firebase: projeto `cbmrs-ti`, RTDB `cbmrs-ti-default-rtdb` — **diferente do `ctsp-estudos`**, não
@@ -68,10 +67,9 @@ Trabalho em português.
 ## 2. REGRAS INVIOLÁVEIS
 
 - **As regras do RTDB são o perímetro real**, não `ADMIN_EMAIL`/`userProfile.admin` no cliente
-  (usado só como UX). Regras cobrem `usuarios`, `historico`, `checklist_custom`, `efetivo` — texto
-  completo em `materiais/referencia/regras-rtdb/` (gitignorado) e em `_regras_rtdb.md` do vault.
-  `viaturas_custom` (renomear viatura) **ainda não está nas regras publicadas** — proposta pronta em
-  `regras_propostas_com_viaturas.json`, falta o João colar no Console. Nó
+  (usado só como UX). Regras cobrem `usuarios`, `historico`, `checklist_custom`, `efetivo`,
+  `viaturas_custom` — texto completo em `materiais/referencia/regras-rtdb/` (gitignorado) e em
+  `_regras_rtdb.md` do vault. Nó
   `efetivo` publicado em 2026-08-19 (leitura: qualquer aprovado · escrita: só admin), necessário pro
   login funcional listar o efetivo sem a conta funcional precisar ser admin.
 - **`firebase.initializeApp` 1x só.**
