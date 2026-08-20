@@ -1091,7 +1091,7 @@ async function loadEfetivo(){
   try{
     const snap=await fbDb.ref('efetivo').once('value');
     const d=snap.val()||{};
-    efetivoList=Object.keys(d).map(uid=>({uid,...d[uid]})).sort((a,b)=>(a.guerra||a.nome||'').localeCompare(b.guerra||b.nome||'','pt-BR'));
+    efetivoList=Object.keys(d).map(uid=>({uid,...d[uid]})).filter(u=>u.uid!==currentUser?.uid).sort((a,b)=>(a.guerra||a.nome||'').localeCompare(b.guerra||b.nome||'','pt-BR'));
   }catch(e){console.warn('CBM: erro ao carregar efetivo (nó pode não ter regra ainda)',e);efetivoList=[];}
 }
 async function loadCustomChecklist(){
