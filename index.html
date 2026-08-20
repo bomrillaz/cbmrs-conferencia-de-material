@@ -113,6 +113,12 @@
     .spinner{display:inline-block;width:16px;height:16px;vertical-align:middle;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;margin-right:8px}
     @keyframes spin{to{transform:rotate(360deg)}}
     .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+    /* ── Drag-and-drop do editor admin (Passo 5) ── */
+    .drag-handle{cursor:grab;touch-action:none;-webkit-user-select:none;user-select:none;display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:15px;width:26px;height:26px;flex-shrink:0;border-radius:4px;background:transparent;border:none}
+    .drag-handle:active{cursor:grabbing;background:var(--border)}
+    .drag-handle:focus-visible{outline:2px solid var(--ember-deep);outline-offset:1px}
+    .drag-ghost{position:fixed;pointer-events:none;opacity:.92;z-index:1000;box-shadow:0 8px 24px rgba(16,27,61,.35);border-radius:8px;margin:0!important}
+    .drag-placeholder{border:2px dashed var(--ember-deep);border-radius:8px;background:var(--amber-light);margin-bottom:4px;box-sizing:border-box}
     @media(max-width:600px){input,textarea{font-size:16px}.hero{padding:16px 14px 16px}}
     @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
     /* ── Animações de entrada ── */
@@ -515,6 +521,136 @@ window.adminDeleteSub=(si,ri,sj)=>{
   adminEditingSub=null;renderAdmin();
 };
 
+// ── Drag-and-drop (Pointer Events) — reordenar linha/seção no editor ──
+// Cobre mouse, touch e caneta com o mesmo código (HTML5 DnD não funciona em touch sem polyfill).
+// Delegado uma única vez no document (evita empilhar listeners a cada renderAdmin()).
+function _dragAutoScroll(y){
+  const edge=70;
+  if(y<edge)window.scrollBy(0,-14);
+  else if(y>innerHeight-edge)window.scrollBy(0,14);
+}
+function _dragCleanup(){
+  const d=adminDragState;
+  if(!d)return;
+  d.ghost?.remove();
+  d.placeholder?.remove();
+  if(d.srcEl)d.srcEl.style.display='';
+  adminDragState=null;
+}
+function _dragActivate(d){
+  const rect=d.srcEl.getBoundingClientRect();
+  d.offsetX=d.startX-rect.left;
+  d.offsetY=d.startY-rect.top;
+  const ghost=d.srcEl.cloneNode(true);
+  ghost.className+=' drag-ghost';
+  ghost.style.width=rect.width+'px';
+  ghost.style.left=rect.left+'px';
+  ghost.style.top=rect.top+'px';
+  document.body.appendChild(ghost);
+  d.ghost=ghost;
+  const ph=document.createElement('div');
+  ph.className='drag-placeholder';
+  ph.style.height=rect.height+'px';
+  d.srcEl.parentNode.insertBefore(ph,d.srcEl);
+  d.srcEl.style.display='none';
+  d.placeholder=ph;
+  d.active=true;
+}
+document.addEventListener('pointerdown',e=>{
+  const rowH=e.target.closest?.('[data-drag-handle]');
+  const secH=!rowH&&e.target.closest?.('[data-sec-handle]');
+  const handle=rowH||secH;
+  if(!handle)return;
+  e.preventDefault();
+  const kind=rowH?'row':'section';
+  const si=Number(handle.dataset.si);
+  const ri=rowH?Number(handle.dataset.ri):null;
+  const srcEl=kind==='row'?handle.closest('[data-row-slot]'):handle.closest('[data-sec-slot]');
+  if(!srcEl)return;
+  const d={kind,si,ri,srcEl,pointerId:e.pointerId,startX:e.clientX,startY:e.clientY,active:false};
+  adminDragState=d;
+  d.timer=setTimeout(()=>{
+    if(adminDragState!==d)return;
+    try{handle.setPointerCapture(e.pointerId);}catch(_){}
+    _dragActivate(d);
+  },300);
+},{passive:false});
+document.addEventListener('pointermove',e=>{
+  const d=adminDragState;
+  if(!d)return;
+  if(!d.active){
+    if(Math.hypot(e.clientX-d.startX,e.clientY-d.startY)>10){clearTimeout(d.timer);adminDragState=null;}
+    return;
+  }
+  d.ghost.style.left=(e.clientX-d.offsetX)+'px';
+  d.ghost.style.top=(e.clientY-d.offsetY)+'px';
+  _dragAutoScroll(e.clientY);
+  const under=document.elementFromPoint(e.clientX,e.clientY);
+  if(!under)return;
+  const slotSel=d.kind==='row'?'[data-row-slot]':'[data-sec-slot]';
+  const containerSel=d.kind==='row'?'[data-rows-container]':'[data-sections-container]';
+  const slot=under.closest(slotSel);
+  const container=slot?slot.closest(containerSel):under.closest(containerSel);
+  if(!container)return;
+  if(slot&&slot!==d.srcEl){
+    const r=slot.getBoundingClientRect();
+    const before=e.clientY<r.top+r.height/2;
+    container.insertBefore(d.placeholder,before?slot:slot.nextSibling);
+  } else if(!slot){
+    container.appendChild(d.placeholder);
+  }
+},{passive:true});
+document.addEventListener('pointerup',e=>{
+  const d=adminDragState;
+  if(!d)return;
+  clearTimeout(d.timer);
+  if(!d.active){adminDragState=null;return;}
+  if(d.kind==='row'){
+    const container=d.placeholder.closest('[data-rows-container]');
+    const toSi=Number(container.dataset.si);
+    const siblings=Array.from(container.children);
+    const phIdx=siblings.indexOf(d.placeholder);
+    const toRi=siblings.slice(0,phIdx).filter(el=>el.matches('[data-row-slot]')&&el!==d.srcEl).length;
+    _dragCleanup();
+    if(toSi===d.si&&toRi===d.ri)return;
+    const[row]=editingSC[d.si].rows.splice(d.ri,1);
+    editingSC[toSi].rows.splice(toRi,0,row);
+  } else {
+    const container=d.placeholder.closest('[data-sections-container]');
+    const siblings=Array.from(container.children);
+    const phIdx=siblings.indexOf(d.placeholder);
+    const toIdx=siblings.slice(0,phIdx).filter(el=>el.matches('[data-sec-slot]')&&el!==d.srcEl).length;
+    _dragCleanup();
+    if(toIdx===d.si)return;
+    const[sec]=editingSC.splice(d.si,1);
+    editingSC.splice(toIdx,0,sec);
+  }
+  adminEditingItem=null;adminMovingItem=null;adminEditingSection=null;adminEditingSub=null;
+  renderAdmin();
+},{passive:true});
+document.addEventListener('pointercancel',()=>{
+  if(adminDragState)clearTimeout(adminDragState.timer);
+  _dragCleanup();
+});
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'&&adminDragState){
+    clearTimeout(adminDragState.timer);
+    _dragCleanup();
+    return;
+  }
+  if(e.key!=='ArrowUp'&&e.key!=='ArrowDown')return;
+  const h=document.activeElement;
+  if(!h?.matches)return;
+  const dir=e.key==='ArrowUp'?-1:1;
+  if(h.matches('[data-drag-handle]')){
+    e.preventDefault();
+    window.adminMoveItem(Number(h.dataset.si),Number(h.dataset.ri),dir);
+  } else if(h.matches('[data-sec-handle]')){
+    e.preventDefault();
+    window.adminMoveSection(Number(h.dataset.si),dir);
+  }
+});
+
 window.adminSaveChecklist=async()=>{
   const btn=document.getElementById('btn-save-ck');
   if(btn){btn.disabled=true;btn.textContent='💾 Salvando...';}
@@ -814,6 +950,7 @@ let adminEditingItem=null; // {si,ri} — linha (item/título) em edição inlin
 let adminMovingItem=null;  // {si,ri} — linha aguardando destino
 let adminEditingSection=null; // si — seção com título/ícone em edição inline
 let adminEditingSub=null;  // {si,ri,sj} — subitem em edição inline ('new' em sj = ainda não existe no array)
+let adminDragState=null;   // {kind:'row'|'section', si, ri, srcEl, timer, active, ghost, placeholder, offsetX, offsetY} — drag-and-drop do editor
 
 // ════════════════════════════════════
 //  STATE MANAGEMENT — setState(patch)
@@ -1215,7 +1352,8 @@ function renderAdmin(){
           subsHTML+=`<button onclick="adminAddSub(${si},${ri})" style="background:transparent;border:none;color:var(--ember-deep);font-size:11px;cursor:pointer;padding:4px 0 0 10px;font-family:'Barlow Condensed',sans-serif;min-height:28px">＋ subitem</button>`;
         }
 
-        const moveBtns=`<div style="display:flex;flex-direction:column;gap:2px;flex-shrink:0">
+        const moveBtns=`<button class="drag-handle" data-drag-handle data-si="${si}" data-ri="${ri}" role="button" tabindex="0" aria-label="Arrastar para reordenar (ou usar as setas ao lado)" title="Arrastar para reordenar">⠿</button>
+  <div style="display:flex;flex-direction:column;gap:2px;flex-shrink:0">
     <button onclick="adminMoveItem(${si},${ri},-1)" ${isFirst?'disabled':''} style="background:${isFirst?'transparent':'var(--border)'};border:none;color:${isFirst?'var(--border)':'var(--text2)'};border-radius:4px;width:30px;height:26px;cursor:${isFirst?'default':'pointer'};font-size:13px;line-height:1;touch-action:manipulation">↑</button>
     <button onclick="adminMoveItem(${si},${ri},1)" ${isLast?'disabled':''} style="background:${isLast?'transparent':'var(--border)'};border:none;color:${isLast?'var(--border)':'var(--text2)'};border-radius:4px;width:30px;height:26px;cursor:${isLast?'default':'pointer'};font-size:13px;line-height:1;touch-action:manipulation">↓</button>
   </div>`;
@@ -1226,13 +1364,13 @@ function renderAdmin(){
   </div>`;
 
         if(isTitle){
-          itemsHTML+=`${mvPanel}<div style="display:flex;align-items:center;gap:6px;padding:8px 4px;margin:10px 0 4px;border-bottom:1.5px solid var(--border);background:${isMv?'var(--amber-light)':'transparent'}">
+          itemsHTML+=`${mvPanel}<div data-row-slot data-si="${si}" data-ri="${ri}" style="display:flex;align-items:center;gap:6px;padding:8px 4px;margin:10px 0 4px;border-bottom:1.5px solid var(--border);background:${isMv?'var(--amber-light)':'transparent'}">
   ${moveBtns}
   <div style="flex:1;font-size:12px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--text3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(row.name)}</div>
   ${actionBtns}
 </div>`;
         } else {
-          itemsHTML+=`${mvPanel}<div style="display:flex;align-items:flex-start;gap:6px;padding:8px 10px;border-radius:8px;margin-bottom:4px;background:${isMv?'var(--amber-light)':'var(--surface)'};border:1px solid ${isMv?'var(--ember-deep)':'var(--border)'}">
+          itemsHTML+=`${mvPanel}<div data-row-slot data-si="${si}" data-ri="${ri}" style="display:flex;align-items:flex-start;gap:6px;padding:8px 10px;border-radius:8px;margin-bottom:4px;background:${isMv?'var(--amber-light)':'var(--surface)'};border:1px solid ${isMv?'var(--ember-deep)':'var(--border)'}">
   ${moveBtns}
   <div style="flex:1;min-width:0;overflow:hidden">
     <div style="font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(row.name)}</div>
@@ -1263,6 +1401,7 @@ function renderAdmin(){
       <div style="font-size:16px;font-weight:900;font-family:'Barlow Condensed',sans-serif;color:var(--text);letter-spacing:.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(sec.title)}</div>
     </div>
     <div style="font-size:11px;color:var(--text3);background:var(--paper);border-radius:4px;padding:2px 8px;font-family:'Barlow Condensed',sans-serif;flex-shrink:0">${itemCount} itens</div>
+    <button class="drag-handle" data-sec-handle data-si="${si}" role="button" tabindex="0" aria-label="Arrastar para reordenar seção (ou usar as setas ao lado)" title="Arrastar para reordenar seção">⠿</button>
     <div style="display:flex;flex-direction:column;gap:2px;flex-shrink:0">
       <button onclick="adminMoveSection(${si},-1)" ${si===0?'disabled':''} title="Mover seção para cima" style="background:${si===0?'transparent':'var(--border)'};border:none;color:${si===0?'var(--border)':'var(--text2)'};border-radius:4px;width:26px;height:22px;cursor:${si===0?'default':'pointer'};font-size:12px;line-height:1;touch-action:manipulation">↑</button>
       <button onclick="adminMoveSection(${si},1)" ${si===editingSC.length-1?'disabled':''} title="Mover seção para baixo" style="background:${si===editingSC.length-1?'transparent':'var(--border)'};border:none;color:${si===editingSC.length-1?'var(--border)':'var(--text2)'};border-radius:4px;width:26px;height:22px;cursor:${si===editingSC.length-1?'default':'pointer'};font-size:12px;line-height:1;touch-action:manipulation">↓</button>
@@ -1271,9 +1410,9 @@ function renderAdmin(){
     <button onclick="adminDeleteSection(${si})" title="Excluir seção" style="background:var(--red-light);border:none;color:var(--red);border-radius:6px;width:36px;height:36px;cursor:pointer;font-size:13px;touch-action:manipulation;flex-shrink:0">✕</button>
   </div>`;
 
-    sectionsHTML+=`<div class="card" style="margin-bottom:10px;border-left:3px solid ${veh.color}">
+    sectionsHTML+=`<div class="card" data-sec-slot data-si="${si}" style="margin-bottom:10px;border-left:3px solid ${veh.color}">
   ${secHeader}
-  ${itemsHTML}
+  <div data-rows-container data-si="${si}">${itemsHTML}</div>
   <div style="display:flex;gap:8px;margin-top:4px">
     <button onclick="adminAddItem(${si},'i')" style="flex:1;background:transparent;border:1.5px dashed var(--border);border-radius:8px;padding:9px;color:var(--text3);cursor:pointer;font-size:12px;font-family:'Barlow Condensed',sans-serif;letter-spacing:.5px;touch-action:manipulation">＋ ITEM</button>
     <button onclick="adminAddItem(${si},'h')" style="flex:1;background:transparent;border:1.5px dashed var(--border);border-radius:8px;padding:9px;color:var(--text3);cursor:pointer;font-size:12px;font-family:'Barlow Condensed',sans-serif;letter-spacing:.5px;touch-action:manipulation">＋ TÍTULO</button>
@@ -1293,9 +1432,9 @@ function renderAdmin(){
   ${banner}
   ${addSectionBar}
   <div style="font-size:10px;color:var(--text3);letter-spacing:.5px;margin-bottom:12px;font-family:'Barlow Condensed',sans-serif">
-    ↑↓ Reordenar · ✏ Editar · ↗ Realocar para outra seção · ✕ Excluir — mesmas ações valem para seções, títulos, itens e subitens
+    ⠿ Arrastar (ou ↑↓) · ✏ Editar · ↗ Realocar para outra seção · ✕ Excluir — mesmas ações valem para seções, títulos, itens e subitens
   </div>
-  ${sectionsHTML||'<div style="text-align:center;padding:40px 0;color:var(--text3)">Nenhuma seção encontrada para este filtro.</div>'}
+  <div data-sections-container>${sectionsHTML||'<div style="text-align:center;padding:40px 0;color:var(--text3)">Nenhuma seção encontrada para este filtro.</div>'}</div>
 </div>
 <div style="position:fixed;bottom:0;left:0;right:0;background:var(--navy-deep);border-top:1px solid var(--border);padding:12px 14px;padding-bottom:max(12px,env(safe-area-inset-bottom));display:flex;gap:8px;z-index:20">
   <button onclick="adminResetChecklist()" class="btn-gray" style="flex:1;font-size:13px">↺ Padrão</button>
