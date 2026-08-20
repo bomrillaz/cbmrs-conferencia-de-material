@@ -442,6 +442,16 @@ window.updateUserProfile=async(uid)=>{
   alert('Perfil atualizado!');
   await window.loadAdmin();
 };
+window.syncEfetivo=async()=>{
+  const active=allUsers.filter(u=>u.aprovado);
+  if(!confirm('Sincronizar efetivo agora?\nIsso vai gravar/atualizar os '+active.length+' militares autorizados no espelho usado pela tela "Quem está conferindo?" do login funcional.'))return;
+  try{
+    const updates={};
+    active.forEach(u=>{updates[u.uid]={nome:u.nome||'',guerra:u.guerra||'',rank:u.rank||'',re:u.re||'',admin:!!u.admin};});
+    await fbDb.ref('efetivo').update(updates);
+    alert('Efetivo sincronizado: '+active.length+' militar(es).');
+  }catch(e){alert('Erro ao sincronizar: '+e.message);}
+};
 window.setFuncional=async(uid)=>{
   if(!confirm('Marcar esta conta como conta funcional (uso compartilhado em celular de serviço)?\nQuem entrar por ela passará a escolher o "responsável" a cada uso, em vez de logar com a própria identidade.'))return;
   await fbDb.ref('usuarios/'+uid).update({funcional:true});
@@ -1384,7 +1394,10 @@ function renderAdmin(){
     root.innerHTML=`<div class="page">${hdr}${tabs}
 <div style="padding:14px;padding-bottom:40px">
   ${pending.length?`<div class="label" style="color:var(--amber)">⏳ Aguardando Aprovação (${pending.length})</div>${pending.map(u=>userForm(u,true)).join('')}`:''}
-  <div class="label">✅ Militares Autorizados (${active.length})</div>
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+    <div class="label" style="margin-bottom:0">✅ Militares Autorizados (${active.length})</div>
+    <button onclick="syncEfetivo()" style="white-space:nowrap;background:transparent;color:var(--text2);border:1px dashed var(--border);border-radius:8px;padding:6px 10px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Barlow Condensed',sans-serif;min-height:32px">🔄 Sincronizar efetivo</button>
+  </div>
   ${active.length?active.map(u=>userForm(u,false)).join(''):'<div style="color:var(--text3);font-size:13px">Nenhum militar autorizado ainda.</div>'}
 </div></div>`;
     document.getElementById('btn-admin-back').addEventListener('click', function(){ setState({screen:'home'}); });
