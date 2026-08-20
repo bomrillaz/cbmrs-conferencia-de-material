@@ -294,9 +294,9 @@ function renderAuth(){
         <div class="card">
           <div class="label">Dados de Acesso</div>
           ${authError?`<div style="background:var(--red-light);border:1px solid var(--red);border-radius:8px;padding:10px;margin-bottom:10px;font-size:12px;color:var(--red-dark)">${icn('warning')} ${esc(authError)}</div>`:''}
-          <input id="reg_email" type="email" placeholder="E-mail *" autocomplete="email">
-          <input id="reg_pw" type="password" placeholder="Senha (mín. 6 caracteres) *" autocomplete="new-password">
-          <input id="reg_pw2" type="password" placeholder="Confirmar senha *" autocomplete="new-password">
+          <input id="reg_email" type="email" placeholder="E-mail *" aria-label="E-mail" autocomplete="email">
+          <input id="reg_pw" type="password" placeholder="Senha (mín. 6 caracteres) *" aria-label="Senha, mínimo 6 caracteres" autocomplete="new-password">
+          <input id="reg_pw2" type="password" placeholder="Confirmar senha *" aria-label="Confirmar senha" autocomplete="new-password">
           <button onclick="registerEmail()" class="btn-red" ${authLoading?'disabled':''}>${authLoading?'Cadastrando...':'CRIAR CONTA'}</button>
           <div style="text-align:center;margin-top:12px;font-size:12px;color:var(--text3)">Após o cadastro, aguarde a aprovação do administrador.</div>
         </div>
@@ -321,8 +321,8 @@ function renderAuth(){
       <div class="card">
         <div class="label">Credenciais de Acesso</div>
         ${authError?`<div style="background:var(--red-light);border:1px solid var(--red);border-radius:8px;padding:10px;margin-bottom:10px;font-size:12px;color:var(--red-dark)">${icn('warning')} ${esc(authError)}</div>`:''}
-        <input id="auth_email" type="email" placeholder="E-mail" autocomplete="email">
-        <input id="auth_pw" type="password" placeholder="Senha" autocomplete="current-password">
+        <input id="auth_email" type="email" placeholder="E-mail" aria-label="E-mail" autocomplete="email">
+        <input id="auth_pw" type="password" placeholder="Senha" aria-label="Senha" autocomplete="current-password">
         <button onclick="signInEmail()" class="btn-red" ${authLoading?'disabled':''}>${authLoading?'Entrando...':'ENTRAR'}</button>
       </div>
       <button onclick="showRegister()" class="btn-gray">${icn('clipboard')} Criar novo acesso</button>
@@ -345,7 +345,7 @@ function renderSelectResp(){
   <p style="font-size:13px;color:rgba(255,255,255,.6);margin-top:4px">Selecione o militar responsável por esta conferência</p>
 </header>
 <div style="padding:14px">
-  <input id="resp_search" type="text" placeholder="Buscar por nome ou nome de guerra" value="${esc(respSearch)}" style="margin-bottom:10px">
+  <input id="resp_search" type="text" placeholder="Buscar por nome ou nome de guerra" aria-label="Buscar responsável por nome ou nome de guerra" value="${esc(respSearch)}" style="margin-bottom:10px">
   <div class="card" style="padding:0;overflow:hidden">
   ${list.length===0
     ?`<div style="padding:20px;text-align:center;color:var(--text3);font-size:13px">${efetivoList.length===0?'Nenhum militar autorizado disponível ainda.':'Nenhum resultado para a busca.'}</div>`
@@ -1246,8 +1246,8 @@ function renderAdminReauth(){
     <h3>${icn('lock',18)} Entrar como Administrador</h3>
     <p style="font-size:12px;color:var(--text3);margin-bottom:10px">Confirme sua própria identidade de administrador para abrir o painel neste aparelho compartilhado.</p>
     ${adminReauthError?`<div style="background:var(--red-light);border:1px solid var(--red);border-radius:8px;padding:8px;margin-bottom:8px;font-size:12px;color:var(--red-dark)">${icn('warning')} ${esc(adminReauthError)}</div>`:''}
-    <input id="reauth_email" type="email" placeholder="Seu e-mail" autocomplete="username">
-    <input id="reauth_pw" type="password" placeholder="Sua senha" autocomplete="current-password">
+    <input id="reauth_email" type="email" placeholder="Seu e-mail" aria-label="Seu e-mail de administrador" autocomplete="username">
+    <input id="reauth_pw" type="password" placeholder="Sua senha" aria-label="Sua senha de administrador" autocomplete="current-password">
     <div class="modal-btns">
       <button class="btn-gray" style="margin:0" onclick="closeAdminReauth()">Cancelar</button>
       <button class="btn-red" onclick="adminReauthLogin()" ${adminReauthLoading?'disabled':''}>${adminReauthLoading?'Entrando...':'Entrar'}</button>
@@ -1407,13 +1407,13 @@ function renderAdmin(){
     const userForm=(u,isPending)=>`
     <div class="card" style="margin-bottom:10px;${isPending?'border-color:var(--amber)':''}">
       <div style="font-size:13px;color:var(--text3);margin-bottom:8px">${icn('mail',13)} ${esc(u.email)}</div>
-      <input id="adm_nome_${u.uid}" type="text" placeholder="Nome Completo *" value="${esc(u.nome||'')}">
-      <input id="adm_guerra_${u.uid}" type="text" placeholder="Nome de Guerra" value="${esc(u.guerra||'')}" style="color:var(--ember);font-weight:700">
-      <select id="adm_rank_${u.uid}">
+      <input id="adm_nome_${u.uid}" type="text" placeholder="Nome Completo *" aria-label="Nome completo" value="${esc(u.nome||'')}">
+      <input id="adm_guerra_${u.uid}" type="text" placeholder="Nome de Guerra" aria-label="Nome de guerra" value="${esc(u.guerra||'')}" style="color:var(--ember);font-weight:700">
+      <select id="adm_rank_${u.uid}" aria-label="Graduação">
         <option value="">Graduação *</option>
         ${rankOpts.map(r=>`<option value="${r}" ${u.rank===r?'selected':''}>${r}</option>`).join('')}
       </select>
-      <input id="adm_re_${u.uid}" type="text" placeholder="Id.Func" value="${esc(u.re||'')}">
+      <input id="adm_re_${u.uid}" type="text" placeholder="Id.Func" aria-label="Identificação funcional" value="${esc(u.re||'')}">
       ${isPending
         ?`<div style="display:flex;gap:8px;margin-top:4px">
              <button onclick="approveUser('${u.uid}')" class="btn-red" style="flex:2">${icn('check')} APROVAR</button>
@@ -1458,7 +1458,7 @@ function renderAdmin(){
 
   // ── Nova seção ──
   const addSectionBar=`<div style="display:flex;gap:6px;margin-bottom:14px">
-  <select id="new-sec-vid" style="flex:1">${VH.map(v=>`<option value="${v.id}" ${adminVehFilter===v.id?'selected':''}>${esc(v.name)}</option>`).join('')}</select>
+  <select id="new-sec-vid" aria-label="Viatura da nova seção" style="flex:1">${VH.map(v=>`<option value="${v.id}" ${adminVehFilter===v.id?'selected':''}>${esc(v.name)}</option>`).join('')}</select>
   <button onclick="adminAddSection(document.getElementById('new-sec-vid').value)" class="btn-red" style="white-space:nowrap;padding:0 14px;font-size:13px">＋ Nova Seção</button>
 </div>`;
 
@@ -1478,8 +1478,8 @@ function renderAdmin(){
 
       if(isEd){
         itemsHTML+=`<div style="background:var(--red-light);border:1px solid var(--red);border-radius:8px;padding:10px;margin-bottom:6px">
-  <input id="edit_name_${si}_${ri}" type="text" value="${esc(row.name)}" placeholder="${isTitle?'Texto do título':'Nome do item'}" style="margin-bottom:6px">
-  ${isTitle?'':`<input id="edit_qty_${si}_${ri}" type="text" value="${esc(row.qty||'')}" placeholder="Quantidade" style="color:var(--ember-deep);margin-bottom:8px">`}
+  <input id="edit_name_${si}_${ri}" type="text" value="${esc(row.name)}" placeholder="${isTitle?'Texto do título':'Nome do item'}" aria-label="${isTitle?'Texto do título':'Nome do item'}" style="margin-bottom:6px">
+  ${isTitle?'':`<input id="edit_qty_${si}_${ri}" type="text" value="${esc(row.qty||'')}" placeholder="Quantidade" aria-label="Quantidade" style="color:var(--ember-deep);margin-bottom:8px">`}
   <div style="display:flex;gap:6px">
     <button onclick="adminSaveEdit(${si},${ri})" class="btn-red" style="flex:1;padding:8px 0;font-size:13px">${icn('check')} Salvar</button>
     <button onclick="adminCancelEdit()" class="btn-gray" style="flex:1;padding:8px 0;font-size:13px">Cancelar</button>
@@ -1517,8 +1517,8 @@ function renderAdmin(){
               const isEdSub=adminEditingSub?.si===si&&adminEditingSub?.ri===ri&&adminEditingSub?.sj===sj;
               if(isEdSub){
                 subsHTML+=`<div style="background:var(--red-light);border:1px solid var(--red);border-radius:6px;padding:8px;margin-bottom:4px">
-  <input id="edit_sub_name_${si}_${ri}_${sj}" type="text" value="${esc(sb.name)}" placeholder="Nome do subitem" style="margin-bottom:4px;font-size:12px;padding:8px 10px">
-  <input id="edit_sub_qty_${si}_${ri}_${sj}" type="text" value="${esc(sb.qty||'')}" placeholder="Quantidade (opcional)" style="color:var(--ember-deep);margin-bottom:6px;font-size:12px;padding:8px 10px">
+  <input id="edit_sub_name_${si}_${ri}_${sj}" type="text" value="${esc(sb.name)}" placeholder="Nome do subitem" aria-label="Nome do subitem" style="margin-bottom:4px;font-size:12px;padding:8px 10px">
+  <input id="edit_sub_qty_${si}_${ri}_${sj}" type="text" value="${esc(sb.qty||'')}" placeholder="Quantidade (opcional)" aria-label="Quantidade, opcional" style="color:var(--ember-deep);margin-bottom:6px;font-size:12px;padding:8px 10px">
   <div style="display:flex;gap:6px">
     <button onclick="adminSaveEditSub(${si},${ri},${sj})" class="btn-red" style="flex:1;padding:6px 0;font-size:12px">${icn('check',14)} Salvar</button>
     <button onclick="adminCancelEditSub()" class="btn-gray" style="flex:1;padding:6px 0;font-size:12px">Cancelar</button>
@@ -1572,8 +1572,8 @@ function renderAdmin(){
     const isEdSec=adminEditingSection===si;
     const secHeader=isEdSec
       ?`<div style="display:flex;gap:8px;margin-bottom:10px">
-    <input id="edit_sec_icon_${si}" type="text" value="${esc(sec.icon||'')}" placeholder="🔧" style="width:56px;text-align:center;font-size:18px">
-    <input id="edit_sec_title_${si}" type="text" value="${esc(sec.title)}" placeholder="Título da seção" style="flex:1">
+    <input id="edit_sec_icon_${si}" type="text" value="${esc(sec.icon||'')}" placeholder="🔧" aria-label="Emoji do ícone da seção" style="width:56px;text-align:center;font-size:18px">
+    <input id="edit_sec_title_${si}" type="text" value="${esc(sec.title)}" placeholder="Título da seção" aria-label="Título da seção" style="flex:1">
   </div>
   <div style="display:flex;gap:6px;margin-bottom:10px">
     <button onclick="adminSaveEditSection(${si})" class="btn-red" style="flex:1;padding:8px 0;font-size:13px">${icn('check')} Salvar</button>
