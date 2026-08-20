@@ -188,6 +188,7 @@ async function setAdminProfile(user){
     aprovado:true,admin:true,
     criadoEm:new Date().toISOString()
   });
+  try{await fbDb.ref('efetivo/'+user.uid).set({nome:user.displayName||'Administrador',guerra:'Santos',rank:'',re:'',admin:true});}catch(e){console.warn('CBM: efetivo ainda sem regra no Console?',e);}
 }
 
 // ════════════════════════════════════
@@ -241,6 +242,7 @@ window.registerEmail = async()=>{
 };
 window.doLogout=async()=>{
   if(!confirm('Encerrar sessão?'))return;
+  sessionResp=null;persistSessionResp();
   await fbAuth.signOut();
 };
 window.showRegister=()=>{authState='register';authError='';renderAuth();};
@@ -330,6 +332,58 @@ function renderAuth(){
 }
 
 // ════════════════════════════════════
+//  SELECT RESP — Escolha do responsável (login funcional)
+// ════════════════════════════════════
+function renderSelectResp(){
+  const root=document.getElementById('root');
+  const q=respSearch.trim().toLowerCase();
+  const list=efetivoList.filter(u=>!q||((u.nome||'')+' '+(u.guerra||'')).toLowerCase().includes(q));
+  root.innerHTML=`<div class="page">
+<header role="banner" class="hero">
+  <div class="hero-badge">1ª CiaBM · 4º PelBM — São Marcos RS</div>
+  <h1 style="font-size:20px;font-weight:900;letter-spacing:1px;margin-top:4px;color:#fff" class="ff">QUEM ESTÁ CONFERINDO?</h1>
+  <p style="font-size:11px;color:rgba(255,255,255,.6);margin-top:4px">Selecione o militar responsável por esta conferência</p>
+</header>
+<div style="padding:14px">
+  <input id="resp_search" type="text" placeholder="Buscar por nome ou nome de guerra" value="${esc(respSearch)}" style="margin-bottom:10px">
+  <div class="card" style="padding:0;overflow:hidden">
+  ${list.length===0
+    ?`<div style="padding:20px;text-align:center;color:var(--text3);font-size:13px">${efetivoList.length===0?'Nenhum militar autorizado disponível ainda.':'Nenhum resultado para a busca.'}</div>`
+    :list.map(u=>`<div onclick="selectResponsavel('${u.uid}')" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' ')selectResponsavel('${u.uid}')" style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid var(--border);cursor:pointer;min-height:44px">
+      <div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--red),var(--red-dark));display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;color:#fff">👤</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:700;font-size:14px;font-family:'Barlow Condensed',sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(u.guerra)||esc(u.nome)||'—'}${u.admin?' ⭐':''}</div>
+        <div style="font-size:11px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(u.rank)||''}${u.nome&&u.guerra?' · '+esc(u.nome):''}</div>
+      </div>
+    </div>`).join('')}
+  </div>
+</div></div>`;
+  const inp=document.getElementById('resp_search');
+  if(inp){
+    inp.focus();inp.selectionStart=inp.selectionEnd=inp.value.length;
+    inp.addEventListener('input',function(){respSearch=this.value;renderSelectResp();});
+  }
+}
+window.selectResponsavel=uid=>{
+  const u=efetivoList.find(x=>x.uid===uid);
+  if(!u)return;
+  sessionResp={uid:u.uid,nome:u.nome||'',guerra:u.guerra||'',rank:u.rank||'',re:u.re||'',admin:!!u.admin,viaFuncional:true};
+  ident={name:u.nome||'',guerra:u.guerra||'',rank:u.rank||'',re:u.re||''};
+  persistSessionResp();
+  setState({screen:'home'});
+};
+window.trocarResponsavel=()=>{
+  if(!confirm('Trocar responsável? As respostas da conferência em andamento serão descartadas.'))return;
+  responses={};secIdx=0;_confSaved=false;_parteGerada=false;
+  try{localStorage.removeItem(LS.R);}catch(e){}
+  sessionResp=null;
+  ident={name:'',guerra:'',rank:'',re:''};
+  persistSessionResp();
+  respSearch='';
+  setState({screen:'selectResp'});
+};
+
+// ════════════════════════════════════
 //  ADMIN — Painel
 // ════════════════════════════════════
 window.loadAdmin=async()=>{
@@ -346,29 +400,34 @@ window.approveUser=async(uid)=>{
   const re=document.getElementById('adm_re_'+uid)?.value?.trim();
   if(!nome||!rank){alert('Preencha ao menos Nome Completo e Graduação.');return;}
   await fbDb.ref('usuarios/'+uid).update({nome,guerra,rank,re,aprovado:true});
+  try{await fbDb.ref('efetivo/'+uid).set({nome,guerra,rank,re,admin:false});}catch(e){console.warn('CBM: efetivo ainda sem regra no Console?',e);}
   alert('Acesso liberado com sucesso!');
   await window.loadAdmin();
 };
 window.deleteUser=async(uid,email)=>{
   if(!confirm('Excluir permanentemente a solicitação de '+email+'?\nEsta ação não pode ser desfeita.'))return;
   await fbDb.ref('usuarios/'+uid).remove();
+  try{await fbDb.ref('efetivo/'+uid).remove();}catch(e){}
   alert('Solicitação excluída.');
   await window.loadAdmin();
 };
 window.revokeUser=async(uid)=>{
   if(!confirm('Revogar acesso deste militar?'))return;
   await fbDb.ref('usuarios/'+uid).update({aprovado:false});
+  try{await fbDb.ref('efetivo/'+uid).remove();}catch(e){}
   await window.loadAdmin();
 };
 window.promoteToAdmin=async(uid,guerra)=>{
   if(!confirm('Promover '+(guerra||'este militar')+' a Administrador?\nEle terá acesso total ao painel e poderá aprovar usuários e editar o checklist.'))return;
   await fbDb.ref('usuarios/'+uid).update({admin:true});
+  try{await fbDb.ref('efetivo/'+uid).update({admin:true});}catch(e){}
   alert('✅ Militar promovido a Administrador com sucesso!');
   await window.loadAdmin();
 };
 window.demoteFromAdmin=async(uid,guerra)=>{
   if(!confirm('Remover privilégios de Administrador de '+(guerra||'este militar')+'?'))return;
   await fbDb.ref('usuarios/'+uid).update({admin:false});
+  try{await fbDb.ref('efetivo/'+uid).update({admin:false});}catch(e){}
   alert('Privilégios de Administrador removidos.');
   await window.loadAdmin();
 };
@@ -379,7 +438,20 @@ window.updateUserProfile=async(uid)=>{
   const re=document.getElementById('adm_re_'+uid)?.value?.trim();
   if(!nome||!rank){alert('Preencha ao menos Nome Completo e Graduação.');return;}
   await fbDb.ref('usuarios/'+uid).update({nome,guerra,rank,re});
+  try{await fbDb.ref('efetivo/'+uid).update({nome,guerra,rank,re});}catch(e){}
   alert('Perfil atualizado!');
+  await window.loadAdmin();
+};
+window.setFuncional=async(uid)=>{
+  if(!confirm('Marcar esta conta como conta funcional (uso compartilhado em celular de serviço)?\nQuem entrar por ela passará a escolher o "responsável" a cada uso, em vez de logar com a própria identidade.'))return;
+  await fbDb.ref('usuarios/'+uid).update({funcional:true});
+  alert('Conta marcada como funcional.');
+  await window.loadAdmin();
+};
+window.unsetFuncional=async(uid)=>{
+  if(!confirm('Remover a marcação de conta funcional desta conta?'))return;
+  await fbDb.ref('usuarios/'+uid).update({funcional:false});
+  alert('Marcação removida.');
   await window.loadAdmin();
 };
 
@@ -951,6 +1023,10 @@ let adminMovingItem=null;  // {si,ri} — linha aguardando destino
 let adminEditingSection=null; // si — seção com título/ícone em edição inline
 let adminEditingSub=null;  // {si,ri,sj} — subitem em edição inline ('new' em sj = ainda não existe no array)
 let adminDragState=null;   // {kind:'row'|'section', si, ri, srcEl, timer, active, ghost, placeholder, offsetX, offsetY} — drag-and-drop do editor
+// ── Login funcional (celular de serviço) ──
+let sessionResp=null;      // {uid,nome,guerra,rank,re,admin,viaFuncional:true} — responsável selecionado numa conta funcional
+let efetivoList=[];        // [{uid,nome,guerra,rank,re,admin}] — espelho de 'usuarios' legível por não-admin (nó `efetivo`)
+let respSearch='';         // filtro de busca na tela selectResp
 
 // ════════════════════════════════════
 //  STATE MANAGEMENT — setState(patch)
@@ -977,7 +1053,7 @@ async function saveToHistory(){
   const entry={
     id:Date.now(),
     date:new Date().toISOString(),
-    ident:{...ident},
+    ident:{...ident,respUid:sessionResp?.uid||currentUser?.uid||'',via:sessionResp?.viaFuncional?'funcional':'individual',operadorUid:currentUser?.uid||''},
     viaturas:[...new Set(getAct()
       .filter(s=>secChecks(s).some(r=>responses[rowKey(s,r)]?.status))
       .map(s=>VH.find(v=>v.id===s.vid).name))],
@@ -1008,6 +1084,13 @@ window.clearHistory=async()=>{
   try{await fbDb.ref('historico').set([]);}catch(e){}
   render();
 };
+async function loadEfetivo(){
+  try{
+    const snap=await fbDb.ref('efetivo').once('value');
+    const d=snap.val()||{};
+    efetivoList=Object.keys(d).map(uid=>({uid,...d[uid]})).sort((a,b)=>(a.guerra||a.nome||'').localeCompare(b.guerra||b.nome||'','pt-BR'));
+  }catch(e){console.warn('CBM: erro ao carregar efetivo (nó pode não ter regra ainda)',e);efetivoList=[];}
+}
 async function loadCustomChecklist(){
   try{
     const snap=await fbDb.ref('checklist_custom').once('value');
@@ -1049,6 +1132,10 @@ function esc(s){
 const LS={R:'cbm5_r',V:'cbm5_v'};
 function save(){try{localStorage.setItem(LS.R,JSON.stringify(responses));localStorage.setItem(LS.V,JSON.stringify(selVids));}catch(e){}}
 function load(){try{const r=localStorage.getItem(LS.R);if(r)responses=JSON.parse(r);const v=localStorage.getItem(LS.V);if(v)selVids=JSON.parse(v);}catch(e){}}
+// ── Login funcional: responsável selecionado sobrevive a reload, mas não a fechar o app ──
+const SS_RESP='cbm5_sessResp';
+function persistSessionResp(){try{if(sessionResp)sessionStorage.setItem(SS_RESP,JSON.stringify(sessionResp));else sessionStorage.removeItem(SS_RESP);}catch(e){}}
+function restoreSessionResp(){try{const s=sessionStorage.getItem(SS_RESP);return s?JSON.parse(s):null;}catch(e){return null;}}
 
 // ════════════════════════════════════
 //  UTILS
@@ -1247,6 +1334,9 @@ function renderAdmin(){
          ${currentUser?.email===ADMIN_EMAIL?`<div style="margin-top:6px">${u.admin
            ?`<button onclick="demoteFromAdmin('${u.uid}','${esc(u.guerra||u.nome||u.email||'')}')" style="width:100%;background:var(--amber-light);color:var(--ember-deep);border:1px solid var(--amber);border-radius:10px;padding:10px 0;font-size:13px;font-weight:700;cursor:pointer;font-family:'Barlow Condensed',sans-serif;min-height:40px">↓ Remover Admin</button>`
            :`<button onclick="promoteToAdmin('${u.uid}','${esc(u.guerra||u.nome||u.email||'')}')" style="width:100%;background:var(--green-light);color:var(--green);border:1px solid var(--green);border-radius:10px;padding:10px 0;font-size:13px;font-weight:700;cursor:pointer;font-family:'Barlow Condensed',sans-serif;min-height:40px">⭐ Promover a Admin</button>`
+         }</div><div style="margin-top:6px">${u.funcional
+           ?`<button onclick="unsetFuncional('${u.uid}')" style="width:100%;background:var(--border);color:var(--text2);border:1px solid var(--border);border-radius:10px;padding:10px 0;font-size:13px;font-weight:700;cursor:pointer;font-family:'Barlow Condensed',sans-serif;min-height:40px">📵 Remover Conta Funcional</button>`
+           :`<button onclick="setFuncional('${u.uid}')" style="width:100%;background:transparent;color:var(--text2);border:1px dashed var(--border);border-radius:10px;padding:10px 0;font-size:13px;font-weight:700;cursor:pointer;font-family:'Barlow Condensed',sans-serif;min-height:40px">📱 Marcar como Conta Funcional</button>`
          }</div>`:''}`
       }
     </div>`;
@@ -1449,6 +1539,7 @@ function renderAdmin(){
 // ════════════════════════════════════
 function render(){
   if(authState!=='app'){renderAuth();return;}
+  if(screen==='selectResp'){renderSelectResp();return;}
   const prog=getProg(),root=document.getElementById('root');
 
   // ── HOME ───────────────────────
@@ -1469,7 +1560,10 @@ ${hasResume()?`<div class="resume-banner"><div><div style="color:var(--green);fo
 <div class="card">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
     <div class="label" style="margin:0">Responsável pela Conferência</div>
+    <div style="display:flex;gap:6px">
+    ${sessionResp?.viaFuncional?`<button onclick="trocarResponsavel()" style="background:transparent;border:1px solid var(--border);border-radius:6px;padding:4px 10px;color:var(--text2);cursor:pointer;font-size:11px;font-family:'Barlow Condensed',sans-serif">🔄 Trocar</button>`:''}
     <button onclick="doLogout()" style="background:transparent;border:1px solid var(--border);border-radius:6px;padding:4px 10px;color:var(--text2);cursor:pointer;font-size:11px;font-family:'Barlow Condensed',sans-serif">SAIR</button>
+    </div>
   </div>
   <div style="display:flex;align-items:center;gap:12px;padding:8px;background:var(--bg);border-radius:8px">
     <div style="width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,var(--red),var(--red-dark));display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">👤</div>
@@ -1800,10 +1894,12 @@ window.finalizarChecklist=function(){
 };
 
 function executarFinalizacao(){
+  const voltaSelectResp=sessionResp?.viaFuncional===true;
   // Reset completo do estado
   responses={};secIdx=0;selVids=VH.map(v=>v.id);
   _confSaved=false;_parteGerada=false;
   try{localStorage.removeItem(LS.R);localStorage.removeItem(LS.V);}catch(_){}
+  if(voltaSelectResp){sessionResp=null;ident={name:'',guerra:'',rank:'',re:''};persistSessionResp();}
 
   // Tela de conclusão com mensagem de bom serviço
   const root=document.getElementById('root');
@@ -1818,8 +1914,8 @@ function executarFinalizacao(){
     </div>
   </div>`;
 
-  // Retorno automático à tela inicial após 3s
-  setTimeout(()=>{setState({screen:'home'});},3000);
+  // Retorno automático à tela inicial após 3s (ou à seleção de responsável, em conta funcional)
+  setTimeout(()=>{setState({screen:voltaSelectResp?'selectResp':'home'});},3000);
 }
 
 // ════════════════════════════════════
@@ -1855,13 +1951,29 @@ fbAuth.onAuthStateChanged(async user=>{
     }
     userProfile=profile;
     if(!profile.aprovado){authState='pending';renderAuth();return;}
-    // Preenche ident do perfil Firebase
-    ident={
-      name:profile.nome||'',
-      guerra:profile.guerra||'',
-      rank:profile.rank||'',
-      re:profile.re||''
-    };
+    if(profile.funcional===true){
+      // Login funcional: identidade não vem do perfil, e sim do responsável escolhido em runtime
+      await loadEfetivo();
+      const saved=restoreSessionResp();
+      if(saved&&efetivoList.some(u=>u.uid===saved.uid)){
+        sessionResp=saved;
+        ident={name:saved.nome||'',guerra:saved.guerra||'',rank:saved.rank||'',re:saved.re||''};
+        screen='home';
+      }else{
+        sessionResp=null;persistSessionResp();
+        ident={name:'',guerra:'',rank:'',re:''};
+        screen='selectResp';
+      }
+    }else{
+      sessionResp=null;
+      // Preenche ident do perfil Firebase
+      ident={
+        name:profile.nome||'',
+        guerra:profile.guerra||'',
+        rank:profile.rank||'',
+        re:profile.re||''
+      };
+    }
     authState='app';
     await loadHistory();
     await loadCustomChecklist();
