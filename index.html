@@ -188,7 +188,7 @@ async function setAdminProfile(user){
     aprovado:true,admin:true,
     criadoEm:new Date().toISOString()
   });
-  try{await fbDb.ref('efetivo/'+user.uid).set({nome:user.displayName||'Administrador',guerra:'Santos',rank:'',re:'',admin:true});}catch(e){console.warn('CBM: efetivo ainda sem regra no Console?',e);}
+  try{await fbDb.ref('efetivo/'+user.uid).set({nome:user.displayName||'Administrador',guerra:'Santos',rank:'',re:'',admin:true,email:user.email||''});}catch(e){console.warn('CBM: efetivo ainda sem regra no Console?',e);}
 }
 
 // ════════════════════════════════════
@@ -460,7 +460,7 @@ window.syncEfetivo=async()=>{
   if(!confirm('Sincronizar efetivo agora?\nIsso vai gravar/atualizar os '+active.length+' militares autorizados no espelho usado pela tela "Quem está conferindo?" do login funcional.'))return;
   try{
     const updates={};
-    active.forEach(u=>{updates[u.uid]={nome:u.nome||'',guerra:u.guerra||'',rank:u.rank||'',re:u.re||'',admin:!!u.admin};});
+    active.forEach(u=>{updates[u.uid]={nome:u.nome||'',guerra:u.guerra||'',rank:u.rank||'',re:u.re||'',admin:!!u.admin,email:u.email||''};});
     await fbDb.ref('efetivo').update(updates);
     alert('Efetivo sincronizado: '+active.length+' militar(es).');
   }catch(e){alert('Erro ao sincronizar: '+e.message);}
@@ -1115,7 +1115,7 @@ async function loadEfetivo(){
   try{
     const snap=await fbDb.ref('efetivo').once('value');
     const d=snap.val()||{};
-    efetivoList=Object.keys(d).map(uid=>({uid,...d[uid]})).filter(u=>u.uid!==currentUser?.uid).sort((a,b)=>(a.guerra||a.nome||'').localeCompare(b.guerra||b.nome||'','pt-BR'));
+    efetivoList=Object.keys(d).map(uid=>({uid,...d[uid]})).filter(u=>u.uid!==currentUser?.uid&&u.email!==ADMIN_EMAIL).sort((a,b)=>(a.guerra||a.nome||'').localeCompare(b.guerra||b.nome||'','pt-BR'));
   }catch(e){console.warn('CBM: erro ao carregar efetivo (nó pode não ter regra ainda)',e);efetivoList=[];}
 }
 async function loadCustomChecklist(){
