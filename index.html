@@ -1047,10 +1047,14 @@ let _keepScroll=false;
 let history_cbm=[];
 let _confSaved=false;
 const CONF_ID='cbm5_conf_id';
-const confJaSalva=()=>{if(_confSaved)return true;try{return !!history_cbm[0]&&String(history_cbm[0].id)===localStorage.getItem(CONF_ID);}catch(e){return false;}};
+const listaDoNo=v=>Array.isArray(v)?v:(v&&typeof v==='object'?Object.values(v):[]);
+const idMarca=()=>{try{return localStorage.getItem(CONF_ID);}catch(e){return null;}};
 const limpaMarcaConf=()=>{try{localStorage.removeItem(CONF_ID);}catch(e){}};
-// Conferência anterior à atual: se a atual já foi gravada ela é [0] e a anterior [1]; senão a anterior é [0].
-const prevConf=()=>history_cbm[confJaSalva()?1:0]||null;
+// Posição da conferência ATUAL no histórico, achada pelo id da marca (persistida: sobrevive a reload e a gravação de outro aparelho). -1 = ainda não gravada.
+const posConf=()=>{const m=idMarca();return m==null?-1:history_cbm.findIndex(x=>x&&String(x.id)===m);};
+const confJaSalva=()=>posConf()>=0;
+// Conferência anterior à atual: a logo abaixo da atual na lista; se a atual não foi gravada, a [0].
+const prevConf=()=>{const p=posConf();return history_cbm[p>=0?p+1:0]||null;};
 let _parteGerada=false;
 // ── Editor de Checklist (Admin) ──
 let customSC=null;         // override carregado do Firebase
@@ -1091,13 +1095,13 @@ function setState(patch){
 // ════════════════════════════════════
 async function saveToHistory(){
   const prog=getProg();
-  if(prog.total===0||confJaSalva())return;
+  if(prog.total===0)return;
   // Sem nenhum item respondido não há conferência a registrar (abrir o Resumo vazio gravava 0% no histórico FIFO).
   if(!getAct().some(s=>secChecks(s).some(r=>responses[rowKey(s,r)]?.status)))return;
-  _confSaved=true;
+  const atual=history_cbm[posConf()];
   const entry={
-    id:Date.now(),
-    date:new Date().toISOString(),
+    id:atual?atual.id:Date.now(),
+    date:atual?atual.date:new Date().toISOString(),
     ident:{...ident,respUid:sessionResp?.uid||currentUser?.uid||'',via:sessionResp?.viaFuncional?'funcional':'individual',operadorUid:currentUser?.uid||''},
     viaturas:[...new Set(getAct()
       .filter(s=>secChecks(s).some(r=>responses[rowKey(s,r)]?.status))
@@ -1107,17 +1111,20 @@ async function saveToHistory(){
     pct:prog.pct,
     ncs:getNCs(),
   };
-  history_cbm.unshift(entry);
-  try{localStorage.setItem(CONF_ID,String(entry.id));}catch(e){}
-  if(history_cbm.length>10)history_cbm.pop();
-  try{localStorage.setItem('cbm5_hist',JSON.stringify(history_cbm));}catch(e){}
-  try{await fbDb.ref('historico').set(history_cbm);}catch(e){}
+  // upsert por id: retomar uma conferência já gravada atualiza a mesma entrada; senão entra no topo (FIFO de 10). transaction: não atropela gravação de outro aparelho.
+  const upsert=lista=>{const k=lista.findIndex(x=>x&&x.id===entry.id);if(k>=0){const c=lista.slice();c[k]=entry;return c;}return [entry,...lista].slice(0,10);};
+  history_cbm=upsert(history_cbm);
+  try{localStorage.setItem(CONF_ID,String(entry.id));localStorage.setItem('cbm5_hist',JSON.stringify(history_cbm));}catch(e){}
+  try{
+    const r=await fbDb.ref('historico').transaction(cur=>upsert(listaDoNo(cur)));
+    if(r.committed){history_cbm=listaDoNo(r.snapshot.val());try{localStorage.setItem('cbm5_hist',JSON.stringify(history_cbm));}catch(e){}}
+  }catch(e){}
 }
 async function loadHistory(){
   try{
     const snap=await fbDb.ref('historico').once('value');
     const d=snap.val();
-    if(d){history_cbm=Array.isArray(d)?d:Object.values(d);}
+    if(d){history_cbm=listaDoNo(d);}
     try{localStorage.setItem('cbm5_hist',JSON.stringify(history_cbm));}catch(e){}
   }catch(e){
     try{const h=localStorage.getItem('cbm5_hist');if(h)history_cbm=JSON.parse(h);}catch(e2){}
@@ -1133,14 +1140,8 @@ window.excluirConferencia=async id=>{
   const vts=(e.viaturas||[]).join(', ')||'sem viatura';
   if(!confirm('Excluir esta conferência?\n\n'+quando+' · '+quem+' · '+vts+' · '+(e.pct||0)+'%\n\nNão dá para desfazer.'))return;
   try{
-    await fbDb.ref('historico').once('value');
-    const r=await fbDb.ref('historico').transaction(cur=>{
-      if(cur==null)return cur;
-      const lista=Array.isArray(cur)?cur:Object.values(cur);
-      return lista.filter(x=>x&&x.id!==id);
-    });
-    const v=r.snapshot.val();
-    history_cbm=Array.isArray(v)?v:(v?Object.values(v):[]);
+    const r=await fbDb.ref('historico').transaction(cur=>cur==null?cur:listaDoNo(cur).filter(x=>x&&x.id!==id));
+    history_cbm=listaDoNo(r.snapshot.val());
     try{localStorage.setItem('cbm5_hist',JSON.stringify(history_cbm));if(localStorage.getItem(CONF_ID)===String(id))limpaMarcaConf();}catch(e2){}
   }catch(err){
     alert('Erro ao excluir: '+(err&&err.code||err&&err.message||'desconhecido'));
@@ -1370,7 +1371,7 @@ function downloadParteDoc(corpo,ncs,now){
   const ano=now.getFullYear();
   const dataFmt=now.toLocaleDateString('pt-BR',{day:'numeric',month:'long',year:'numeric'});
   const prevC=prevConf();
-  const isDupNC=nc=>prevC?prevC.ncs.some(p=>p.veh===nc.veh&&p.sec===nc.sec&&p.name===nc.name):false;
+  const isDupNC=nc=>prevC?(prevC.ncs||[]).some(p=>p.veh===nc.veh&&p.sec===nc.sec&&p.name===nc.name):false;
   const linhasNC=ncs.map((nc,i)=>{const dup=isDupNC(nc);const dupNote=dup?` ▲ Já reportado em ${new Date(prevC.date).toLocaleDateString('pt-BR')}`:'';return `<tr style="background:${i%2?'#fff5f5':'#fff'}">
     <td style="padding:6px 8px;border:1px solid #ccc;font-size:11pt">${nc.veh==='SOP'?'Sala':esc(nc.veh)}</td>
     <td style="padding:6px 8px;border:1px solid #ccc;font-size:11pt">${esc(nc.sec)}</td>
@@ -1864,7 +1865,7 @@ ${getAct().map((s,i)=>{const sp=secProg(s),veh=VH.find(v=>v.id===s.vid),p=sp.tot
 </div>
 ${ncs.length?`<div class="card" style="border-left:3px solid var(--red)"><div class="label" style="color:var(--red)">Não Conformidades (${ncs.length})</div>${ncs.map(nc=>`<div class="nc-item"><div style="font-size:13px;color:var(--red)">${nc.veh==='SOP'?'Sala':esc(nc.veh)} — ${esc(nc.sec)}</div><div style="font-weight:600;font-size:14px">${esc(nc.name)}</div>${nc.obs?`<div style="font-size:13px;color:var(--red-dark);margin-top:4px">› ${esc(nc.obs)}</div>`:''}</div>`).join('')}</div>`:''}
 <button onclick="gerarRelatorio()" class="btn-red">${icn('download')} GERAR RELATÓRIO (HTML)</button>
-${(()=>{const _prev=prevConf();const _reps=_prev?ncs.filter(nc=>_prev.ncs.some(p=>p.veh===nc.veh&&p.sec===nc.sec&&p.name===nc.name)):[];return _reps.length?`<div style="background:var(--amber-light);border:1px solid var(--amber);border-radius:8px;padding:10px;margin-bottom:8px;font-size:12px;color:var(--amber)">${icn('warning')} ${_reps.length} NC(s) já reportada(s) na conferência anterior. Serão indicadas no documento Word.</div>`:'';})()}
+${(()=>{const _prev=prevConf();const _reps=_prev?ncs.filter(nc=>(_prev.ncs||[]).some(p=>p.veh===nc.veh&&p.sec===nc.sec&&p.name===nc.name)):[];return _reps.length?`<div style="background:var(--amber-light);border:1px solid var(--amber);border-radius:8px;padding:10px;margin-bottom:8px;font-size:12px;color:var(--amber)">${icn('warning')} ${_reps.length} NC(s) já reportada(s) na conferência anterior. Serão indicadas no documento Word.</div>`:'';})()}
 ${ncs.length?`<button onclick="gerarParte()" class="btn-gold">${icn('file')} GERAR PARTE (Word) — ${ncs.length} N/C(s)</button>`:''}
 <button onclick="voltarConf()" class="btn-gray">${icn('arrowLeft')} RETORNAR À CONFERÊNCIA</button>
 <button onclick="finalizarChecklist()" class="btn-red" style="margin-top:6px">${icn('checkCircle')} FINALIZAR</button>
@@ -2090,6 +2091,7 @@ window.finalizarChecklist=function(){
 };
 
 function executarFinalizacao(){
+  saveToHistory(); // grava (ou atualiza) a conferência antes do reset; sem item respondido não grava
   const voltaSelectResp=sessionResp?.viaFuncional===true;
   // Reset completo do estado
   responses={};secIdx=0;selVids=VH.map(v=>v.id);
