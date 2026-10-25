@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Sistema de conferência de material do Corpo de Bombeiros Militar — 1ª CiaBM / 4º PelBM — São Marcos RS">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' https://*.googleapis.com https://*.gstatic.com https://*.firebase.com https://*.firebaseio.com https://*.firebaseapp.com https://www.recaptcha.net https://recaptcha.net https://www.google.com https://www.gstatic.com wss://*.firebaseio.com data: blob:; object-src 'none'; base-uri 'self'; form-action 'none';">
-  <!-- CBMRS — Conferência de Material 2026 · v2026.7.0 — editor de checklist livre (seção/título/subitem/drag-and-drop) + login funcional com responsável selecionável -->
+  <!-- CBMRS — Conferência de Material 2026 · v2026.8.0 — identidade Bomrillaz (tokens, Barlow Condensed local, hierarquia de botão) + seção vazia no checklist custom não reprova o resto · antes: v2026.7.0 — editor de checklist livre (seção/título/subitem/drag-and-drop) + login funcional com responsável selecionável -->
   <title>CBMRS — Conferência de Material | 1ª CiaBM · 4º PelBM</title>
   <meta name="theme-color" content="#D32412">
   <link rel="manifest" href="manifest.webmanifest">
@@ -13,12 +13,15 @@
   <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png">
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600&display=swap');
+    @font-face{font-family:'Barlow Condensed';font-style:normal;font-weight:500;font-display:swap;src:url('assets/fonts/barlow-condensed-500.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;}
+    @font-face{font-family:'Barlow Condensed';font-style:normal;font-weight:600;font-display:swap;src:url('assets/fonts/barlow-condensed-600.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;}
+    @font-face{font-family:'Barlow Condensed';font-style:normal;font-weight:700;font-display:swap;src:url('assets/fonts/barlow-condensed-700.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;}
     :root{
-      --red:#D32412;--red-dark:#A51D0E;--red-mid:#BB2010;--red-light:#FBEDE6;
-      --ember:#F0883C;--ember-deep:#C77B1D;
+      --red:#C92211;--red-dark:#A51D0E;--red-mid:#BB2010;--red-light:#FBEDE6;
+      --red-solid:#D32412;--red-solid-rgb:211,36,18;
+      --ember:#F0883C;--ember-deep:#C77B1D;--ember-text:#8F4A0E;
       --navy:#101B3D;--navy-2:#1B2A55;--navy-deep:#0B1430;
-      --paper:#F7F3EC;--paper-2:#EFE9DD;--surface:#FFFFFF;--bg:#EFE9DD;
+      --paper:#F7F3EC;--paper-2:#EFE9DD;--surface:#FFFFFF;--white:#FFFFFF;--bg:#EFE9DD;
       --text:#1C2233;--text2:#5A6072;--text3:#64697A;
       --border:#E6DFD2;--line-soft:#EDE7DB;
       --green:#16713C;--green-light:#E9F4EC;
@@ -28,32 +31,37 @@
       --shadow:0 1px 2px rgba(16,27,61,.05),0 4px 14px rgba(16,27,61,.06);
       --shadow-md:0 2px 4px rgba(16,27,61,.06),0 10px 28px rgba(16,27,61,.10);
       --shadow-lg:0 8px 32px rgba(16,27,61,.18);
+
+      --z-modal:100;--z-drag:1000;
+      --ease-out:cubic-bezier(0.16,1,0.3,1);--ease-spring:cubic-bezier(0.34,1.56,0.64,1);
+      --dur-instant:120ms;--dur-fast:200ms;--dur-base:300ms;--dur-slow:500ms;--dur-cinema:800ms;
+      --font-display:'Barlow Condensed',-apple-system,'Helvetica Neue',Arial,sans-serif;
     }
     *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
-    body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;-webkit-text-size-adjust:100%}
-    .ff{font-family:'Barlow Condensed',sans-serif}
+    body{font-family:-apple-system,'SF Pro Display','Helvetica Neue',Arial,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;-webkit-text-size-adjust:100%}
+    .ff{font-family:var(--font-display)}
     .page{min-height:100vh;padding-bottom:80px}
     /* ── Acessibilidade: focus ring visível em todos os interativos ── */
     :focus-visible{outline:2px solid var(--red);outline-offset:2px}
     button:focus-visible{outline:2px solid var(--ember);outline-offset:2px}
     /* ── Cards e labels ── */
     .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;margin-bottom:10px;box-shadow:var(--shadow)}
-    .label{font-size:12px;font-weight:700;color:var(--ember-deep);letter-spacing:2.5px;text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:8px;font-family:'Barlow Condensed',sans-serif;padding-bottom:6px}
+    .label{font-size:12px;font-weight:700;color:var(--ember-deep);letter-spacing:2.5px;text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:8px;font-family:var(--font-display);padding-bottom:6px}
     .label::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,rgba(199,123,29,.35),transparent)}
     /* ── Formulários ── */
-    input,textarea,select{display:block;width:100%;background:var(--surface);border:1.5px solid var(--border);border-radius:8px;padding:11px 13px;color:var(--text);font-size:14px;margin-bottom:8px;font-family:'Barlow',sans-serif;transition:border-color .2s}
+    input,textarea,select{display:block;width:100%;background:var(--surface);border:1.5px solid var(--border);border-radius:8px;padding:11px 13px;color:var(--text);font-size:14px;margin-bottom:8px;font-family:inherit;transition:border-color .2s}
     select{appearance:none;-webkit-appearance:none;cursor:pointer;color:var(--text);background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23C77B1D' stroke-width='2' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 13px center;padding-right:36px}
-    input:focus,textarea:focus,select:focus{outline:none;border-color:var(--red);box-shadow:0 0 0 3px rgba(211,36,18,.12)}
+    input:focus,textarea:focus,select:focus{outline:none;border-color:var(--red);box-shadow:0 0 0 3px rgba(var(--red-solid-rgb),.12)}
     input::placeholder,textarea::placeholder{color:var(--text3)}
     /* ── Botões ── */
-    .btn-red{background:linear-gradient(135deg,var(--red),var(--red-dark));color:#fff;border:none;border-radius:10px;padding:14px 0;font-size:15px;font-weight:800;cursor:pointer;width:100%;font-family:'Barlow Condensed',sans-serif;letter-spacing:1px;transition:transform .1s,box-shadow .2s;box-shadow:0 4px 14px rgba(211,36,18,.4);min-height:44px;touch-action:manipulation}
-    .btn-red:active{transform:scale(.98);box-shadow:0 2px 6px rgba(211,36,18,.28)}
+    .btn-red{background:linear-gradient(135deg,var(--red-solid),var(--red-dark));color:#fff;border:none;border-radius:10px;padding:14px 0;font-size:15px;font-weight:800;cursor:pointer;width:100%;font-family:var(--font-display);letter-spacing:1px;transition:transform .1s,box-shadow .2s;box-shadow:0 4px 14px rgba(var(--red-solid-rgb),.4);min-height:44px;touch-action:manipulation}
+    .btn-red:active{transform:scale(.98);box-shadow:0 2px 6px rgba(var(--red-solid-rgb),.28)}
     .btn-red:disabled{opacity:.35;cursor:not-allowed;box-shadow:none}
-    .btn-gray{background:var(--surface);color:var(--text2);border:1px solid var(--border);border-radius:10px;padding:13px 0;font-size:14px;font-weight:700;cursor:pointer;width:100%;margin-top:8px;font-family:'Barlow Condensed',sans-serif;letter-spacing:1px;transition:background .2s;min-height:44px;touch-action:manipulation}
-    .btn-gray:hover{background:var(--paper-2)}
-    .btn-gold{background:linear-gradient(135deg,var(--amber),var(--ember-deep));color:#fff;border:none;border-radius:10px;padding:14px 0;font-size:15px;font-weight:800;cursor:pointer;width:100%;margin-top:8px;font-family:'Barlow Condensed',sans-serif;letter-spacing:1px;transition:opacity .2s;box-shadow:0 4px 14px rgba(138,84,16,.35);min-height:44px;touch-action:manipulation}
+    .btn-gray,.btn-neutral{background:var(--surface);color:var(--text2);border:1px solid var(--border);border-radius:10px;padding:13px 0;font-size:14px;font-weight:700;cursor:pointer;width:100%;margin-top:8px;font-family:var(--font-display);letter-spacing:1px;transition:background .2s;min-height:44px;touch-action:manipulation}
+    .btn-gray:hover,.btn-neutral:hover{background:var(--paper-2)}
+    .btn-gold{background:linear-gradient(135deg,var(--amber),var(--ember-deep));color:#fff;border:none;border-radius:10px;padding:14px 0;font-size:15px;font-weight:800;cursor:pointer;width:100%;margin-top:8px;font-family:var(--font-display);letter-spacing:1px;transition:opacity .2s;box-shadow:0 4px 14px rgba(138,84,16,.35);min-height:44px;touch-action:manipulation}
     .btn-gold:disabled{opacity:.4;cursor:not-allowed;box-shadow:none}
-    .btn-sm{background:var(--line-soft);color:var(--text2);border:1px solid var(--border);border-radius:6px;padding:4px 10px;cursor:pointer;font-size:13px;font-family:'Barlow Condensed',sans-serif;white-space:nowrap;touch-action:manipulation;min-height:36px}
+    .btn-sm{background:var(--line-soft);color:var(--text2);border:1px solid var(--border);border-radius:6px;padding:4px 10px;cursor:pointer;font-size:13px;font-family:var(--font-display);white-space:nowrap;touch-action:manipulation;min-height:36px}
     /* ── Tela de login: banner de fundo + logo (padrão Bomrillaz) ── */
     .auth-wrap{position:relative;min-height:100vh;overflow:hidden}
     .auth-bg-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center top}
@@ -61,17 +69,17 @@
     .auth-content{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:20px;text-align:center}
     .auth-logo{width:auto;height:72px;object-fit:contain;margin-bottom:6px}
     /* ── Hero ── */
-    .hero{background:linear-gradient(160deg,var(--red-mid) 0%,var(--red) 45%,var(--red-dark) 100%);padding:20px 16px 18px;text-align:center;position:relative;overflow:hidden;box-shadow:0 6px 24px rgba(211,36,18,.35)}
+    .hero{background:linear-gradient(160deg,var(--red-mid) 0%,var(--red) 45%,var(--red-dark) 100%);padding:20px 16px 18px;text-align:center;position:relative;overflow:hidden;box-shadow:0 6px 24px rgba(var(--red-solid-rgb),.35)}
     .hero::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(-55deg,transparent,transparent 10px,rgba(0,0,0,.06) 10px,rgba(0,0,0,.06) 12px)}
     .hero::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2.5px;background:linear-gradient(90deg,transparent,var(--ember) 25%,var(--ember) 75%,transparent)}
     .hero>*{position:relative;z-index:1}
-    .hero-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.3);border-radius:20px;padding:3px 12px;margin-bottom:8px;font-size:9px;font-weight:700;color:#fff;letter-spacing:2px;text-transform:uppercase;font-family:'Barlow Condensed',sans-serif}
+    .hero-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.3);border-radius:20px;padding:3px 12px;margin-bottom:8px;font-size:9px;font-weight:700;color:#fff;letter-spacing:2px;text-transform:uppercase;font-family:var(--font-display)}
     .hero-pills{display:flex;justify-content:center;gap:6px;flex-wrap:wrap;margin-top:8px}
-    .hero-pill{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:6px;padding:4px 10px;font-size:12px;color:rgba(255,255,255,.85);font-family:'Barlow Condensed',sans-serif;letter-spacing:.5px}
+    .hero-pill{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:6px;padding:4px 10px;font-size:12px;color:rgba(255,255,255,.85);font-family:var(--font-display);letter-spacing:.5px}
     /* ── Viaturas ── */
     .veh-card{display:flex;align-items:center;gap:12px;background:var(--surface);border:1.5px solid var(--border);border-left-width:3px;border-radius:10px;padding:12px 12px 12px 10px;margin-bottom:8px;cursor:pointer;transition:border-color .2s,background .2s,box-shadow .2s;min-height:64px;touch-action:manipulation}
     .veh-card:hover{background:var(--paper-2);border-color:var(--text3)}
-    .veh-card.selected{background:var(--red-light);border-color:var(--red) !important;box-shadow:0 0 0 1px rgba(211,36,18,.18)}
+    .veh-card.selected{background:var(--red-light);border-color:var(--red) !important;box-shadow:0 0 0 1px rgba(var(--red-solid-rgb),.18)}
     .veh-check{width:22px;height:22px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;transition:all .2s}
     .veh-card.selected .veh-check{background:var(--red);border-color:var(--red);color:#fff}
     .veh-name{font-weight:900;font-size:15px;line-height:1.2}
@@ -80,30 +88,30 @@
     .sticky-hdr{position:sticky;top:0;z-index:10;padding:10px 14px;box-shadow:0 4px 20px rgba(16,27,61,.25);color:#fff}
     .prog-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:3px}
     .prog-lbl{font-size:13px;color:rgba(255,255,255,.65);letter-spacing:.5px;text-transform:uppercase}
-    .prog-count{font-size:12px;color:#fff;font-weight:700;font-family:'Barlow Condensed',sans-serif}
+    .prog-count{font-size:12px;color:#fff;font-weight:700;font-family:var(--font-display)}
     .prog-bg{height:5px;background:rgba(255,255,255,.2);border-radius:3px;margin-top:2px}
     .prog-fill{height:5px;background:linear-gradient(90deg,var(--ember-deep),var(--ember));border-radius:3px;transition:width .3s}
     /* ── Itens de checklist ── */
     .item-card{border-radius:10px;padding:12px;margin-bottom:8px;border:1.5px solid var(--border);background:var(--surface)}
     .item-card.ok{background:var(--green-light);border-color:var(--green)}
     .item-card.nc{background:var(--red-light);border-color:var(--red)}
-    .item-qty{display:inline-block;font-size:12px;font-weight:700;color:var(--ember-deep);font-family:'Barlow Condensed',sans-serif;letter-spacing:.5px;margin-top:3px;background:rgba(199,123,29,.1);border-radius:4px;padding:1px 6px}
+    .item-qty{display:inline-block;font-size:12px;font-weight:700;color:var(--ember-deep);font-family:var(--font-display);letter-spacing:.5px;margin-top:3px;background:rgba(199,123,29,.1);border-radius:4px;padding:1px 6px}
     .row-title{font-size:12px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:var(--text3);margin:16px 0 6px;padding-bottom:4px;border-bottom:1.5px solid var(--border)}
     .row-title:first-child{margin-top:0}
     .sub-item-list{list-style:none;margin:6px 0 0;padding:0}
     .sub-item{font-size:13px;color:var(--text2);padding:2px 0 2px 14px;position:relative}
     .sub-item::before{content:'–';position:absolute;left:0;color:var(--text3)}
     .sub-item-qty{color:var(--text3);font-size:13px}
-    .item-btn{flex:1;border-radius:7px;padding:6px 0;cursor:pointer;font-weight:800;border:1.5px solid var(--border);background:var(--surface);color:var(--text3);font-family:'Barlow Condensed',sans-serif;font-size:13px;letter-spacing:.5px;transition:all .15s;min-height:36px;touch-action:manipulation}
+    .item-btn{flex:1;border-radius:7px;padding:6px 0;cursor:pointer;font-weight:800;border:1.5px solid var(--border);background:var(--surface);color:var(--text3);font-family:var(--font-display);font-size:13px;letter-spacing:.5px;transition:all .15s;min-height:36px;touch-action:manipulation}
     .item-btn.ok{background:var(--green);border-color:var(--green);color:#fff}
     .item-btn.nc{background:var(--red);border-color:var(--red);color:#fff}
     /* ── Barra de navegação inferior ── */
     .bottom-bar{position:fixed;bottom:0;left:0;right:0;background:linear-gradient(to top,var(--navy-deep),var(--navy));border-top:1px solid rgba(0,0,0,.15);padding:10px 14px;padding-bottom:max(10px,env(safe-area-inset-bottom));display:flex;gap:8px;z-index:20;box-shadow:0 -4px 16px rgba(16,27,61,.3)}
-    .nav-btn{border-radius:9px;padding:12px 0;cursor:pointer;border:none;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14px;letter-spacing:.5px;min-height:44px;touch-action:manipulation}
+    .nav-btn{border-radius:9px;padding:12px 0;cursor:pointer;border:none;font-family:var(--font-display);font-weight:700;font-size:14px;letter-spacing:.5px;min-height:44px;touch-action:manipulation}
     /* ── Modal ── */
-    .modal-overlay{position:fixed;inset:0;background:rgba(16,27,61,.45);display:flex;align-items:center;justify-content:center;z-index:100;padding:20px}
+    .modal-overlay{position:fixed;inset:0;background:rgba(16,27,61,.45);display:flex;align-items:center;justify-content:center;z-index:var(--z-modal);padding:20px}
     .modal{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:24px;width:100%;max-width:360px;box-shadow:var(--shadow-lg)}
-    .modal h3{font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:800;margin-bottom:8px;color:var(--text)}
+    .modal h3{font-family:var(--font-display);font-size:18px;font-weight:800;margin-bottom:8px;color:var(--text)}
     .modal p{font-size:13px;color:var(--text2);margin-bottom:18px;line-height:1.5}
     .modal-btns{display:flex;gap:10px}
     .modal-btns button{flex:1}
@@ -117,14 +125,14 @@
     .drag-handle{cursor:grab;touch-action:none;-webkit-user-select:none;user-select:none;display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:15px;width:26px;height:26px;flex-shrink:0;border-radius:4px;background:transparent;border:none}
     .drag-handle:active{cursor:grabbing;background:var(--border)}
     .drag-handle:focus-visible{outline:2px solid var(--ember-deep);outline-offset:1px}
-    .drag-ghost{position:fixed;pointer-events:none;opacity:.92;z-index:1000;box-shadow:0 8px 24px rgba(16,27,61,.35);border-radius:8px;margin:0!important}
+    .drag-ghost{position:fixed;pointer-events:none;opacity:.92;z-index:var(--z-drag);box-shadow:0 8px 24px rgba(16,27,61,.35);border-radius:8px;margin:0!important}
     .drag-placeholder{border:2px dashed var(--ember-deep);border-radius:8px;background:var(--amber-light);margin-bottom:4px;box-sizing:border-box}
     @media(max-width:600px){input,textarea{font-size:16px}.hero{padding:16px 14px 16px}}
     @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
     /* ── Animações de entrada ── */
     @keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
     .card,.item-card,.veh-card{animation:fadeUp .38s cubic-bezier(.16,1,.3,1) both;animation-delay:calc(var(--anim-i,0)*50ms)}
-    .item-card:hover{box-shadow:0 0 0 1px rgba(211,36,18,.12),0 4px 14px rgba(16,27,61,.08)}
+    .item-card:hover{box-shadow:0 0 0 1px rgba(var(--red-solid-rgb),.12),0 4px 14px rgba(16,27,61,.08)}
   </style>
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
@@ -256,7 +264,7 @@ function renderAuth(){
   if(authState==='loading'){
     root.innerHTML=`<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:16px">
       <div style="width:48px;height:48px;border:3px solid var(--red);border-top-color:transparent;border-radius:50%;animation:spin 0.8s linear infinite"></div>
-      <div style="color:var(--text3);font-size:14px;font-family:'Barlow',sans-serif">Verificando acesso...</div>
+      <div style="color:var(--text3);font-size:14px;font-family:inherit">Verificando acesso...</div>
     </div>`;
     return;
   }
@@ -267,7 +275,7 @@ function renderAuth(){
       <div class="auth-content">
       <div style="max-width:380px;width:100%">
         <div style="color:var(--ember);margin-bottom:16px">${icn('hourglass',48)}</div>
-        <div style="font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:800;color:var(--ember);margin-bottom:8px">AGUARDANDO AUTORIZAÇÃO</div>
+        <div style="font-family:var(--font-display);font-size:20px;font-weight:800;color:var(--ember);margin-bottom:8px">AGUARDANDO AUTORIZAÇÃO</div>
         <div style="color:var(--text2);font-size:13px;line-height:1.6;margin-bottom:24px">
           Seu cadastro foi registrado.<br>Avise o administrador para liberar seu acesso.
         </div>
@@ -289,7 +297,7 @@ function renderAuth(){
         <img class="auth-logo" src="assets/cesar-coin.png" alt="" onerror="this.style.display='none'">
         <header class="hero" style="border-radius:12px;margin-bottom:20px;padding:16px;text-align:center">
           <div class="hero-badge">1ª CiaBM · 4º PelBM — São Marcos RS</div>
-          <div style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:900;color:#fff;margin-top:6px">CRIAR ACESSO</div>
+          <div style="font-family:var(--font-display);font-size:18px;font-weight:900;color:#fff;margin-top:6px">CRIAR ACESSO</div>
         </header>
         <div class="card">
           <div class="label">Dados de Acesso</div>
@@ -315,7 +323,7 @@ function renderAuth(){
       <img class="auth-logo" src="assets/cesar-coin.png" alt="" onerror="this.style.display='none'">
       <header class="hero" style="border-radius:12px;margin-bottom:20px;padding:20px;text-align:center">
         <div class="hero-badge">1ª CiaBM · 4º PelBM — São Marcos RS</div>
-        <div style="font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:900;color:#fff;margin-top:6px">CONFERÊNCIA DE MATERIAL</div>
+        <div style="font-family:var(--font-display);font-size:22px;font-weight:900;color:#fff;margin-top:6px">CONFERÊNCIA DE MATERIAL</div>
         <div style="font-size:12px;color:rgba(255,255,255,.5);letter-spacing:1.5px;margin-top:2px">Acesso restrito ao efetivo</div>
       </header>
       <div class="card">
@@ -352,7 +360,7 @@ function renderSelectResp(){
     :list.map(u=>`<div onclick="selectResponsavel('${u.uid}')" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' ')selectResponsavel('${u.uid}')" style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid var(--border);cursor:pointer;min-height:44px">
       <div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--red),var(--red-dark));display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff">${icn('person',18)}</div>
       <div style="flex:1;min-width:0">
-        <div style="font-weight:700;font-size:14px;font-family:'Barlow Condensed',sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(u.guerra)||esc(u.nome)||'—'}${u.admin?' '+icn('star',12):''}</div>
+        <div style="font-weight:700;font-size:14px;font-family:var(--font-display);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(u.guerra)||esc(u.nome)||'—'}${u.admin?' '+icn('star',12):''}</div>
         <div style="font-size:13px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(u.rank)||''}${u.nome&&u.guerra?' · '+esc(u.nome):''}</div>
       </div>
     </div>`).join('')}
@@ -1423,14 +1431,14 @@ function renderAdmin(){
   // ── Cabeçalho fixo ──
   const hdr=`<div style="background:linear-gradient(160deg,var(--paper-2),var(--surface));padding:16px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:10">
   <button id="btn-admin-back" style="background:transparent;border:none;color:var(--text2);cursor:pointer;padding:0 8px 0 0">${icn('arrowLeft',22)}</button>
-  <div style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:900;letter-spacing:1px">${icn('gear',18)} PAINEL ADMIN</div>
+  <div style="font-family:var(--font-display);font-size:18px;font-weight:900;letter-spacing:1px">${icn('gear',18)} PAINEL ADMIN</div>
   <div style="width:40px"></div>
 </div>`;
 
   // ── Abas ──
   const tabs=`<div style="display:flex;background:var(--bg);border-bottom:1px solid var(--border);position:sticky;top:57px;z-index:9">
-  <button onclick="adminSetTab('users')" style="flex:1;padding:11px 0;border:none;border-bottom:3px solid ${adminTab==='users'?'var(--red)':'transparent'};background:transparent;color:${adminTab==='users'?'#fff':'var(--text3)'};font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14px;letter-spacing:.5px;cursor:pointer;transition:color .15s">${icn('users',15)} USUÁRIOS</button>
-  <button onclick="adminSetTab('checklist')" style="flex:1;padding:11px 0;border:none;border-bottom:3px solid ${adminTab==='checklist'?'var(--red)':'transparent'};background:transparent;color:${adminTab==='checklist'?'#fff':'var(--text3)'};font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14px;letter-spacing:.5px;cursor:pointer;transition:color .15s">${icn('clipboard',15)} CHECKLIST</button>
+  <button onclick="adminSetTab('users')" style="flex:1;padding:11px 0;border:none;border-bottom:3px solid ${adminTab==='users'?'var(--red)':'transparent'};background:transparent;color:${adminTab==='users'?'#fff':'var(--text3)'};font-family:var(--font-display);font-weight:700;font-size:14px;letter-spacing:.5px;cursor:pointer;transition:color .15s">${icn('users',15)} USUÁRIOS</button>
+  <button onclick="adminSetTab('checklist')" style="flex:1;padding:11px 0;border:none;border-bottom:3px solid ${adminTab==='checklist'?'var(--red)':'transparent'};background:transparent;color:${adminTab==='checklist'?'#fff':'var(--text3)'};font-family:var(--font-display);font-weight:700;font-size:14px;letter-spacing:.5px;cursor:pointer;transition:color .15s">${icn('clipboard',15)} CHECKLIST</button>
 </div>`;
 
   // ════════════════
@@ -1452,18 +1460,18 @@ function renderAdmin(){
       ${isPending
         ?`<div style="display:flex;gap:8px;margin-top:4px">
              <button onclick="approveUser('${u.uid}')" class="btn-red" style="flex:2">${icn('check')} APROVAR</button>
-             <button onclick="deleteUser('${u.uid}','${u.email}')" style="flex:1;background:var(--red-light);color:var(--red-dark);border:1px solid var(--red);border-radius:10px;padding:13px 0;font-size:13px;font-weight:700;cursor:pointer;font-family:'Barlow Condensed',sans-serif;min-height:44px">${icn('trash')} Excluir</button>
+             <button onclick="deleteUser('${u.uid}','${u.email}')" style="flex:1;background:var(--red-light);color:var(--red-dark);border:1px solid var(--red);border-radius:10px;padding:13px 0;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font-display);min-height:44px">${icn('trash')} Excluir</button>
            </div>`
         :`<div style="display:flex;gap:8px;margin-top:4px">
            <button onclick="updateUserProfile('${u.uid}')" class="btn-gray" style="flex:2">${icn('save')} Atualizar</button>
-           <button onclick="revokeUser('${u.uid}')" style="flex:1;background:var(--red-light);color:var(--red-dark);border:1px solid var(--red);border-radius:10px;padding:13px 0;font-size:13px;font-weight:700;cursor:pointer;font-family:'Barlow Condensed',sans-serif">Revogar</button>
+           <button onclick="revokeUser('${u.uid}')" style="flex:1;background:var(--red-light);color:var(--red-dark);border:1px solid var(--red);border-radius:10px;padding:13px 0;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font-display)">Revogar</button>
          </div>
          ${currentUser?.email===ADMIN_EMAIL?`<div style="margin-top:6px">${u.admin
-           ?`<button onclick="demoteFromAdmin('${u.uid}','${esc(u.guerra||u.nome||u.email||'')}')" style="width:100%;background:var(--amber-light);color:var(--ember-deep);border:1px solid var(--amber);border-radius:10px;padding:10px 0;font-size:13px;font-weight:700;cursor:pointer;font-family:'Barlow Condensed',sans-serif;min-height:40px">${icn('arrowDown')} Remover Admin</button>`
-           :`<button onclick="promoteToAdmin('${u.uid}','${esc(u.guerra||u.nome||u.email||'')}')" style="width:100%;background:var(--green-light);color:var(--green);border:1px solid var(--green);border-radius:10px;padding:10px 0;font-size:13px;font-weight:700;cursor:pointer;font-family:'Barlow Condensed',sans-serif;min-height:40px">${icn('star')} Promover a Admin</button>`
+           ?`<button onclick="demoteFromAdmin('${u.uid}','${esc(u.guerra||u.nome||u.email||'')}')" style="width:100%;background:var(--amber-light);color:var(--ember-deep);border:1px solid var(--amber);border-radius:10px;padding:10px 0;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font-display);min-height:40px">${icn('arrowDown')} Remover Admin</button>`
+           :`<button onclick="promoteToAdmin('${u.uid}','${esc(u.guerra||u.nome||u.email||'')}')" style="width:100%;background:var(--green-light);color:var(--green);border:1px solid var(--green);border-radius:10px;padding:10px 0;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font-display);min-height:40px">${icn('star')} Promover a Admin</button>`
          }</div><div style="margin-top:6px">${u.funcional
-           ?`<button onclick="unsetFuncional('${u.uid}')" style="width:100%;background:var(--border);color:var(--text2);border:1px solid var(--border);border-radius:10px;padding:10px 0;font-size:13px;font-weight:700;cursor:pointer;font-family:'Barlow Condensed',sans-serif;min-height:40px">${icn('phoneOff')} Remover Conta Funcional</button>`
-           :`<button onclick="setFuncional('${u.uid}')" style="width:100%;background:transparent;color:var(--text2);border:1px dashed var(--border);border-radius:10px;padding:10px 0;font-size:13px;font-weight:700;cursor:pointer;font-family:'Barlow Condensed',sans-serif;min-height:40px">${icn('phone')} Marcar como Conta Funcional</button>`
+           ?`<button onclick="unsetFuncional('${u.uid}')" style="width:100%;background:var(--border);color:var(--text2);border:1px solid var(--border);border-radius:10px;padding:10px 0;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font-display);min-height:40px">${icn('phoneOff')} Remover Conta Funcional</button>`
+           :`<button onclick="setFuncional('${u.uid}')" style="width:100%;background:transparent;color:var(--text2);border:1px dashed var(--border);border-radius:10px;padding:10px 0;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font-display);min-height:40px">${icn('phone')} Marcar como Conta Funcional</button>`
          }</div>`:''}`
       }
     </div>`;
@@ -1472,7 +1480,7 @@ function renderAdmin(){
   ${pending.length?`<div class="label" style="color:var(--amber)">${icn('hourglass',13)} Aguardando Aprovação (${pending.length})</div>${pending.map(u=>userForm(u,true)).join('')}`:''}
   <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
     <div class="label" style="margin-bottom:0">${icn('checkCircle',13)} Militares Autorizados (${active.length})</div>
-    <button onclick="syncEfetivo()" style="white-space:nowrap;background:transparent;color:var(--text2);border:1px dashed var(--border);border-radius:8px;padding:6px 10px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Barlow Condensed',sans-serif;min-height:32px">${icn('refresh',14)} Sincronizar efetivo</button>
+    <button onclick="syncEfetivo()" style="white-space:nowrap;background:transparent;color:var(--text2);border:1px dashed var(--border);border-radius:8px;padding:6px 10px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font-display);min-height:32px">${icn('refresh',14)} Sincronizar efetivo</button>
   </div>
   ${active.length?active.map(u=>userForm(u,false)).join(''):'<div style="color:var(--text3);font-size:13px">Nenhum militar autorizado ainda.</div>'}
 </div></div>`;
@@ -1487,8 +1495,8 @@ function renderAdmin(){
 
   // ── Filtro de viatura ──
   const vehFilterBar=`<div style="display:flex;gap:6px;overflow-x:auto;padding:10px 14px;border-bottom:1px solid var(--border);background:var(--bg);-webkit-overflow-scrolling:touch;scrollbar-width:none">
-  <button onclick="adminSetVehFilter('all')" style="white-space:nowrap;border-radius:6px;padding:5px 12px;cursor:pointer;font-size:12px;font-family:'Barlow Condensed',sans-serif;font-weight:700;border:1.5px solid ${adminVehFilter==='all'?'var(--red)':'var(--border)'};background:${adminVehFilter==='all'?'var(--red)':'var(--bg)'};color:${adminVehFilter==='all'?'#fff':'var(--text3)'}">TODAS</button>
-  ${VH.map(v=>`<button onclick="adminSetVehFilter('${v.id}')" style="white-space:nowrap;border-radius:6px;padding:5px 12px;cursor:pointer;font-size:12px;font-family:'Barlow Condensed',sans-serif;font-weight:700;border:1.5px solid ${adminVehFilter===v.id?v.color:'var(--border)'};background:${adminVehFilter===v.id?v.color:'var(--bg)'};color:${adminVehFilter===v.id?'#fff':'var(--text3)'}">${esc(v.name)}</button>`).join('')}
+  <button onclick="adminSetVehFilter('all')" style="white-space:nowrap;border-radius:6px;padding:5px 12px;cursor:pointer;font-size:12px;font-family:var(--font-display);font-weight:700;border:1.5px solid ${adminVehFilter==='all'?'var(--red)':'var(--border)'};background:${adminVehFilter==='all'?'var(--red)':'var(--bg)'};color:${adminVehFilter==='all'?'#fff':'var(--text3)'}">TODAS</button>
+  ${VH.map(v=>`<button onclick="adminSetVehFilter('${v.id}')" style="white-space:nowrap;border-radius:6px;padding:5px 12px;cursor:pointer;font-size:12px;font-family:var(--font-display);font-weight:700;border:1.5px solid ${adminVehFilter===v.id?v.color:'var(--border)'};background:${adminVehFilter===v.id?v.color:'var(--bg)'};color:${adminVehFilter===v.id?'#fff':'var(--text3)'}">${esc(v.name)}</button>`).join('')}
 </div>`;
 
   // ── Renomear viatura (só com uma viatura específica filtrada) ──
@@ -1506,7 +1514,7 @@ function renderAdmin(){
   </div>`
         :`<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px">
     <div style="font-size:12px;color:var(--text3)">Editando checklist de <strong style="color:var(--text)">${esc(veh.name)}</strong></div>
-    <button onclick="adminStartEditVehName('${veh.id}')" style="white-space:nowrap;background:transparent;border:1px dashed var(--border);border-radius:8px;padding:6px 10px;color:var(--text2);cursor:pointer;font-size:12px;font-weight:700;font-family:'Barlow Condensed',sans-serif;min-height:32px">${icn('edit',13)} Renomear viatura</button>
+    <button onclick="adminStartEditVehName('${veh.id}')" style="white-space:nowrap;background:transparent;border:1px dashed var(--border);border-radius:8px;padding:6px 10px;color:var(--text2);cursor:pointer;font-size:12px;font-weight:700;font-family:var(--font-display);min-height:32px">${icn('edit',13)} Renomear viatura</button>
   </div>`;
     }
   }
@@ -1551,13 +1559,13 @@ function renderAdmin(){
             return`<button onclick="adminMoveToSection(${osi})" style="display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 10px;cursor:pointer;color:var(--text);text-align:left;touch-action:manipulation;width:100%">
   <span style="font-size:16px">${esc(os.icon)}</span>
   <div>
-    <div style="font-size:9px;color:var(--ember-deep);text-transform:uppercase;letter-spacing:.5px;font-family:'Barlow Condensed',sans-serif">${esc(ov.name)}</div>
-    <div style="font-size:13px;font-weight:700;font-family:'Barlow Condensed',sans-serif">${esc(os.title)}</div>
+    <div style="font-size:9px;color:var(--ember-deep);text-transform:uppercase;letter-spacing:.5px;font-family:var(--font-display)">${esc(ov.name)}</div>
+    <div style="font-size:13px;font-weight:700;font-family:var(--font-display)">${esc(os.title)}</div>
   </div>
 </button>`;
           }).join('');
           mvPanel=`<div style="background:var(--amber-light);border:1px solid var(--ember-deep);border-radius:8px;padding:10px;margin-bottom:4px">
-  <div style="font-size:12px;color:var(--ember-deep);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;font-family:'Barlow Condensed',sans-serif">${icn('move',12)} Mover para:</div>
+  <div style="font-size:12px;color:var(--ember-deep);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;font-family:var(--font-display)">${icn('move',12)} Mover para:</div>
   <div style="display:flex;flex-direction:column;gap:6px;max-height:220px;overflow-y:auto">${opts}</div>
   <button onclick="adminCancelEdit()" class="btn-gray" style="margin-top:8px;padding:6px 0;font-size:12px">${icn('x',12)} Cancelar</button>
 </div>`;
@@ -1589,7 +1597,7 @@ function renderAdmin(){
             });
             subsHTML+=`</div>`;
           }
-          subsHTML+=`<button onclick="adminAddSub(${si},${ri})" style="background:transparent;border:none;color:var(--ember-deep);font-size:13px;cursor:pointer;padding:4px 0 0 10px;font-family:'Barlow Condensed',sans-serif;min-height:28px">＋ subitem</button>`;
+          subsHTML+=`<button onclick="adminAddSub(${si},${ri})" style="background:transparent;border:none;color:var(--ember-deep);font-size:13px;cursor:pointer;padding:4px 0 0 10px;font-family:var(--font-display);min-height:28px">＋ subitem</button>`;
         }
 
         const moveBtns=`<button class="drag-handle" data-drag-handle data-si="${si}" data-ri="${ri}" role="button" tabindex="0" aria-label="Arrastar para reordenar (ou usar as setas ao lado)" title="Arrastar para reordenar">${icn('grip',16)}</button>
@@ -1614,7 +1622,7 @@ function renderAdmin(){
   ${moveBtns}
   <div style="flex:1;min-width:0;overflow:hidden">
     <div style="font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(row.name)}</div>
-    <div style="font-size:12px;color:var(--ember-deep);font-family:'Barlow Condensed',sans-serif;margin-top:1px">${esc(row.qty)}</div>
+    <div style="font-size:12px;color:var(--ember-deep);font-family:var(--font-display);margin-top:1px">${esc(row.qty)}</div>
     ${subsHTML}
   </div>
   ${actionBtns}
@@ -1637,10 +1645,10 @@ function renderAdmin(){
       :`<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
     <span style="font-size:20px">${esc(sec.icon)}</span>
     <div style="flex:1;min-width:0">
-      <div style="font-size:9px;color:var(--ember-deep);text-transform:uppercase;letter-spacing:1.5px;font-family:'Barlow Condensed',sans-serif">${esc(veh.name)} · ${esc(veh.type)}</div>
-      <div style="font-size:16px;font-weight:900;font-family:'Barlow Condensed',sans-serif;color:var(--text);letter-spacing:.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(sec.title)}</div>
+      <div style="font-size:9px;color:var(--ember-deep);text-transform:uppercase;letter-spacing:1.5px;font-family:var(--font-display)">${esc(veh.name)} · ${esc(veh.type)}</div>
+      <div style="font-size:16px;font-weight:900;font-family:var(--font-display);color:var(--text);letter-spacing:.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(sec.title)}</div>
     </div>
-    <div style="font-size:13px;color:var(--text3);background:var(--paper);border-radius:4px;padding:2px 8px;font-family:'Barlow Condensed',sans-serif;flex-shrink:0">${itemCount} itens</div>
+    <div style="font-size:13px;color:var(--text3);background:var(--paper);border-radius:4px;padding:2px 8px;font-family:var(--font-display);flex-shrink:0">${itemCount} itens</div>
     <button class="drag-handle" data-sec-handle data-si="${si}" role="button" tabindex="0" aria-label="Arrastar para reordenar seção (ou usar as setas ao lado)" title="Arrastar para reordenar seção">${icn('grip',16)}</button>
     <div style="display:flex;flex-direction:column;gap:2px;flex-shrink:0">
       <button onclick="adminMoveSection(${si},-1)" ${si===0?'disabled':''} aria-label="Mover seção para cima" style="background:${si===0?'transparent':'var(--border)'};border:none;color:${si===0?'var(--border)':'var(--text2)'};border-radius:4px;width:26px;height:22px;cursor:${si===0?'default':'pointer'};line-height:1;touch-action:manipulation">${icn('arrowUp',12)}</button>
@@ -1654,8 +1662,8 @@ function renderAdmin(){
   ${secHeader}
   <div data-rows-container data-si="${si}">${itemsHTML}</div>
   <div style="display:flex;gap:8px;margin-top:4px">
-    <button onclick="adminAddItem(${si},'i')" style="flex:1;background:transparent;border:1.5px dashed var(--border);border-radius:8px;padding:9px;color:var(--text3);cursor:pointer;font-size:12px;font-family:'Barlow Condensed',sans-serif;letter-spacing:.5px;touch-action:manipulation">＋ ITEM</button>
-    <button onclick="adminAddItem(${si},'h')" style="flex:1;background:transparent;border:1.5px dashed var(--border);border-radius:8px;padding:9px;color:var(--text3);cursor:pointer;font-size:12px;font-family:'Barlow Condensed',sans-serif;letter-spacing:.5px;touch-action:manipulation">＋ TÍTULO</button>
+    <button onclick="adminAddItem(${si},'i')" style="flex:1;background:transparent;border:1.5px dashed var(--border);border-radius:8px;padding:9px;color:var(--text3);cursor:pointer;font-size:12px;font-family:var(--font-display);letter-spacing:.5px;touch-action:manipulation">＋ ITEM</button>
+    <button onclick="adminAddItem(${si},'h')" style="flex:1;background:transparent;border:1.5px dashed var(--border);border-radius:8px;padding:9px;color:var(--text3);cursor:pointer;font-size:12px;font-family:var(--font-display);letter-spacing:.5px;touch-action:manipulation">＋ TÍTULO</button>
   </div>
 </div>`;
   });
@@ -1672,7 +1680,7 @@ function renderAdmin(){
   ${banner}
   ${vehRenameBar}
   ${addSectionBar}
-  <div style="font-size:13px;color:var(--text3);letter-spacing:.3px;margin-bottom:12px;font-family:'Barlow Condensed',sans-serif;display:flex;flex-wrap:wrap;align-items:center;gap:3px">
+  <div style="font-size:13px;color:var(--text3);letter-spacing:.3px;margin-bottom:12px;font-family:var(--font-display);display:flex;flex-wrap:wrap;align-items:center;gap:3px">
     ${icn('grip',12)} Arrastar (ou ${icn('arrowUp',11)}${icn('arrowDown',11)}) · ${icn('edit',12)} Editar · ${icn('move',12)} Realocar para outra seção · ${icn('trash',12)} Excluir — mesmas ações valem para seções, títulos, itens e subitens
   </div>
   <div data-sections-container>${sectionsHTML||'<div style="text-align:center;padding:40px 0;color:var(--text3)">Nenhuma seção encontrada para este filtro.</div>'}</div>
@@ -1707,19 +1715,19 @@ function render(){
   </div>
 </header>
 <div style="padding:14px">
-${hasResume()?`<div class="resume-banner"><div><div style="color:var(--green);font-weight:700;font-size:13px">${icn('check')} Conferência em andamento</div><div style="font-size:13px;color:var(--text2)">${prog.done}/${prog.total} itens · ${prog.pct}%</div></div><button onclick="retomar()" style="background:var(--green);color:#fff;border:none;border-radius:8px;padding:8px 14px;cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px">RETOMAR ${icn('arrowRight',13)}</button></div>`:''}
+${hasResume()?`<div class="resume-banner"><div><div style="color:var(--green);font-weight:700;font-size:13px">${icn('check')} Conferência em andamento</div><div style="font-size:13px;color:var(--text2)">${prog.done}/${prog.total} itens · ${prog.pct}%</div></div><button onclick="retomar()" style="background:var(--green);color:#fff;border:none;border-radius:8px;padding:8px 14px;cursor:pointer;font-family:var(--font-display);font-weight:700;font-size:13px">RETOMAR ${icn('arrowRight',13)}</button></div>`:''}
 <div class="card">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
     <div class="label" style="margin:0">Responsável pela Conferência</div>
     <div style="display:flex;gap:6px">
-    ${sessionResp?.viaFuncional?`<button onclick="trocarResponsavel()" style="background:transparent;border:1px solid var(--border);border-radius:6px;padding:4px 10px;color:var(--text2);cursor:pointer;font-size:13px;font-family:'Barlow Condensed',sans-serif">${icn('refresh',12)} Trocar</button>`:''}
-    <button onclick="doLogout()" style="background:transparent;border:1px solid var(--border);border-radius:6px;padding:4px 10px;color:var(--text2);cursor:pointer;font-size:13px;font-family:'Barlow Condensed',sans-serif">SAIR</button>
+    ${sessionResp?.viaFuncional?`<button onclick="trocarResponsavel()" style="background:transparent;border:1px solid var(--border);border-radius:6px;padding:4px 10px;color:var(--text2);cursor:pointer;font-size:13px;font-family:var(--font-display)">${icn('refresh',12)} Trocar</button>`:''}
+    <button onclick="doLogout()" style="background:transparent;border:1px solid var(--border);border-radius:6px;padding:4px 10px;color:var(--text2);cursor:pointer;font-size:13px;font-family:var(--font-display)">SAIR</button>
     </div>
   </div>
   <div style="display:flex;align-items:center;gap:12px;padding:8px;background:var(--bg);border-radius:8px">
     <div style="width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,var(--red),var(--red-dark));display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff">${icn('person',20)}</div>
     <div style="flex:1;min-width:0">
-      <div style="font-weight:700;font-size:15px;font-family:'Barlow Condensed',sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(ident.name)||'<span style="color:var(--text3)">Perfil incompleto</span>'}</div>
+      <div style="font-weight:700;font-size:15px;font-family:var(--font-display);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(ident.name)||'<span style="color:var(--text3)">Perfil incompleto</span>'}</div>
       ${ident.guerra?`<div style="font-size:13px;color:var(--ember);font-weight:700">${esc(ident.guerra)}</div>`:''}
       <div style="font-size:12px;color:var(--text3)">${esc(ident.rank)||'<span style="color:var(--red)">Sem graduação</span>'}${ident.re?' · Id.Func: '+esc(ident.re):''}</div>
     </div>
@@ -1783,7 +1791,7 @@ ${!identOk()?`<div style="background:var(--amber-light);border:1px solid var(--a
     <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0">
       <div id="hdr-pct" style="font-size:30px;font-weight:900" class="ff">${prog.pct}%</div>
       <div id="hdr-cnt" style="font-size:13px;opacity:.65">${prog.done}/${prog.total}</div>
-      <button id="btn-todos-ok" onclick="marcarTodosOk()" style="background:rgba(255,255,255,0.2);color:white;border:1px solid rgba(255,255,255,0.4);border-radius:6px;padding:3px 8px;cursor:pointer;font-size:13px;font-family:'Barlow Condensed',sans-serif;font-weight:700;white-space:nowrap;display:${semResposta>0?'':'none'}">${icn('check',14)} Todos Conforme</button>
+      <button id="btn-todos-ok" onclick="marcarTodosOk()" style="background:rgba(255,255,255,0.2);color:white;border:1px solid rgba(255,255,255,0.4);border-radius:6px;padding:3px 8px;cursor:pointer;font-size:13px;font-family:var(--font-display);font-weight:700;white-space:nowrap;display:${semResposta>0?'':'none'}">${icn('check',14)} Todos Conforme</button>
     </div>
   </div>
   <div class="prog-row"><span class="prog-lbl">progresso total</span><span id="prog-cnt" class="prog-count">${prog.done}/${prog.total} itens</span></div><div class="prog-bg"><div id="prog-fill" class="prog-fill" style="width:${prog.pct}%"></div></div>
@@ -1858,7 +1866,7 @@ ${ncs.length?`<button onclick="gerarParte()" class="btn-gold">${icn('file')} GER
               </button>
               <div id="hnc_${e.id}" style="display:none;margin-top:6px">
                 ${ncs.map(nc=>`<div style="background:var(--red-light);border:1px solid var(--red);border-radius:6px;padding:8px;margin-bottom:6px">
-                  <div style="font-size:12px;color:var(--red);font-family:'Barlow Condensed',sans-serif;letter-spacing:.5px">${nc.veh==='SOP'?'Sala':esc(nc.veh)} — ${esc(nc.sec)}</div>
+                  <div style="font-size:12px;color:var(--red);font-family:var(--font-display);letter-spacing:.5px">${nc.veh==='SOP'?'Sala':esc(nc.veh)} — ${esc(nc.sec)}</div>
                   <div style="font-size:13px;font-weight:600;margin-top:2px">${esc(nc.name)} <span style="color:var(--text3);font-size:13px">(${esc(nc.qty)})</span></div>
                   ${nc.obs?`<div style="font-size:13px;color:var(--red-dark);margin-top:4px">› ${esc(nc.obs)}</div>`:''}
                 </div>`).join('')}
@@ -1868,12 +1876,12 @@ ${ncs.length?`<button onclick="gerarParte()" class="btn-gold">${icn('file')} GER
           <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
             <div style="flex:1;min-width:0">
               <div style="font-size:13px;color:var(--text3);margin-bottom:2px">${icn('calendar',12)} ${fmtDate(e.date||new Date().toISOString())}</div>
-              <div style="font-weight:700;font-size:15px;font-family:'Barlow Condensed',sans-serif">${esc((e.ident||{}).name||'—')}</div>
+              <div style="font-weight:700;font-size:15px;font-family:var(--font-display)">${esc((e.ident||{}).name||'—')}</div>
               ${(e.ident||{}).guerra?`<div style="font-size:13px;color:var(--ember);font-weight:700">${esc(e.ident.guerra)}</div>`:''}
               <div style="font-size:12px;color:var(--text3)">${esc((e.ident||{}).rank||'')}</div>
             </div>
             <div style="text-align:right;flex-shrink:0">
-              <div style="font-size:32px;font-weight:900;color:${pctColor(e.pct||0)};font-family:'Barlow Condensed',sans-serif;line-height:1">${e.pct||0}%</div>
+              <div style="font-size:32px;font-weight:900;color:${pctColor(e.pct||0)};font-family:var(--font-display);line-height:1">${e.pct||0}%</div>
               <div style="font-size:13px;color:var(--text3)">${e.done||0}/${e.total||0} itens</div>
               <div style="font-size:13px;margin-top:2px;color:${ncs.length?'var(--red)':'var(--green)'}">${ncs.length?icn('warning',12)+' '+ncs.length+' NC':icn('check',12)+' OK'}</div>
             </div>
@@ -1886,8 +1894,8 @@ ${ncs.length?`<button onclick="gerarParte()" class="btn-gold">${icn('file')} GER
     root.innerHTML=`<div class="page">
 <div style="background:linear-gradient(160deg,var(--paper-2),var(--surface));padding:16px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:10">
   <button id="btn-hist-back" style="background:transparent;border:none;color:var(--text2);cursor:pointer;padding:0 8px 0 0">${icn('arrowLeft',22)}</button>
-  <div style="font-size:18px;font-weight:900;font-family:'Barlow Condensed',sans-serif;letter-spacing:1px">${icn('clipboard',18)} HISTÓRICO</div>
-  ${isAdminUI()?`<button onclick="clearHistory()" style="background:transparent;border:1px solid var(--border);border-radius:6px;padding:4px 10px;color:var(--red);cursor:pointer;font-size:13px;font-family:'Barlow Condensed',sans-serif">LIMPAR</button>`:`<div style="width:60px"></div>`}
+  <div style="font-size:18px;font-weight:900;font-family:var(--font-display);letter-spacing:1px">${icn('clipboard',18)} HISTÓRICO</div>
+  ${isAdminUI()?`<button onclick="clearHistory()" style="background:transparent;border:1px solid var(--border);border-radius:6px;padding:4px 10px;color:var(--red);cursor:pointer;font-size:13px;font-family:var(--font-display)">LIMPAR</button>`:`<div style="width:60px"></div>`}
 </div>
 <div style="padding:14px">
   <div style="font-size:13px;color:var(--text3);margin-bottom:12px">Últimas ${history_cbm.length}/10 conferências registradas. Sincronizado entre todos os dispositivos. ${icn('cloud',12)}</div>
@@ -1940,7 +1948,7 @@ function patchItemStatus(id, st){
     if(!obsArea){
       const div=document.createElement('div');
       div.setAttribute('data-obs-area','');
-      div.innerHTML=`<textarea id="obs_${id}" placeholder="Descreva a não conformidade (obrigatório)..." style="margin-top:8px;min-height:56px;border-color:var(--red);display:block;width:100%;background:var(--bg);border:1.5px solid var(--red);border-radius:8px;padding:11px 13px;color:var(--text);font-size:14px;margin-bottom:8px;font-family:'Barlow',sans-serif" oninput="setObs('${id}',this.value)"></textarea><div class="nc-warn">${icn('warning',13)} Descrição obrigatória para registrar N/C.</div>`;
+      div.innerHTML=`<textarea id="obs_${id}" placeholder="Descreva a não conformidade (obrigatório)..." style="margin-top:8px;min-height:56px;border-color:var(--red);display:block;width:100%;background:var(--bg);border:1.5px solid var(--red);border-radius:8px;padding:11px 13px;color:var(--text);font-size:14px;margin-bottom:8px;font-family:inherit" oninput="setObs('${id}',this.value)"></textarea><div class="nc-warn">${icn('warning',13)} Descrição obrigatória para registrar N/C.</div>`;
       card.appendChild(div);
       setTimeout(()=>{const t=document.getElementById('obs_'+id);if(t){t.focus();t.scrollIntoView({behavior:'smooth',block:'center'});}},50);
     }
@@ -2059,9 +2067,9 @@ function executarFinalizacao(){
   <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:24px;text-align:center;background:var(--bg)">
     <div style="max-width:360px;width:100%;animation:fadeUp .45s cubic-bezier(.16,1,.3,1)">
       <div style="color:var(--green);margin-bottom:20px">${icn('checkCircle',80)}</div>
-      <div style="font-family:'Barlow Condensed',sans-serif;font-size:30px;font-weight:900;color:var(--green);letter-spacing:2px;text-transform:uppercase">Checklist Finalizado</div>
+      <div style="font-family:var(--font-display);font-size:30px;font-weight:900;color:var(--green);letter-spacing:2px;text-transform:uppercase">Checklist Finalizado</div>
       <div style="height:2px;background:linear-gradient(90deg,transparent,var(--green) 30%,var(--green) 70%,transparent);margin:18px 0"></div>
-      <div style="font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:900;color:var(--ember);letter-spacing:4px;text-transform:uppercase;display:flex;align-items:center;justify-content:center;gap:8px">${icn('fire',26)} Bom Serviço! ${icn('fire',26)}</div>
+      <div style="font-family:var(--font-display);font-size:26px;font-weight:900;color:var(--ember);letter-spacing:4px;text-transform:uppercase;display:flex;align-items:center;justify-content:center;gap:8px">${icn('fire',26)} Bom Serviço! ${icn('fire',26)}</div>
       <div style="color:var(--text3);font-size:12px;margin-top:20px;letter-spacing:1px;text-transform:uppercase">Retornando à tela inicial...</div>
     </div>
   </div>`;

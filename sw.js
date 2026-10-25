@@ -6,12 +6,13 @@
    - navegação (HTML): network-first (offline cai no cache).
    - demais GET elegíveis: stale-while-revalidate. */
 
-const CACHE = 'cbmrs-conferencia-cache-v3';
+const CACHE = 'cbmrs-conferencia-cache-v4';
 const SAME = [
   './', 'index.html', 'manifest.webmanifest',
   'assets/icon-192.png', 'assets/icon-512.png', 'assets/cesar-coin.png',
   'assets/favicon-16.png', 'assets/favicon-32.png', 'assets/apple-touch-icon.png',
-  'img/banner.jpg', 'img/banner.webp'
+  'img/banner.jpg', 'img/banner.webp',
+  'assets/fonts/barlow-condensed-500.woff2', 'assets/fonts/barlow-condensed-600.woff2', 'assets/fonts/barlow-condensed-700.woff2'
 ];
 const CROSS = [
   'https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js',
