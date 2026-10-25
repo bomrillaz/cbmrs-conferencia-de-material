@@ -384,7 +384,7 @@ window.selectResponsavel=uid=>{
 };
 window.trocarResponsavel=()=>{
   if(!confirm('Trocar responsável? As respostas da conferência em andamento serão descartadas.'))return;
-  responses={};secIdx=0;_confSaved=false;_parteGerada=false;
+  responses={};secIdx=0;_confSaved=false;limpaMarcaConf();_parteGerada=false;
   try{localStorage.removeItem(LS.R);}catch(e){}
   sessionResp=null;
   ident={name:'',guerra:'',rank:'',re:''};
@@ -1046,6 +1046,11 @@ let selVids=VH.map(v=>v.id), responses={}, modal=null;
 let _keepScroll=false;
 let history_cbm=[];
 let _confSaved=false;
+const CONF_ID='cbm5_conf_id';
+const confJaSalva=()=>{if(_confSaved)return true;try{return !!history_cbm[0]&&String(history_cbm[0].id)===localStorage.getItem(CONF_ID);}catch(e){return false;}};
+const limpaMarcaConf=()=>{try{localStorage.removeItem(CONF_ID);}catch(e){}};
+// Conferência anterior à atual: se a atual já foi gravada ela é [0] e a anterior [1]; senão a anterior é [0].
+const prevConf=()=>history_cbm[confJaSalva()?1:0]||null;
 let _parteGerada=false;
 // ── Editor de Checklist (Admin) ──
 let customSC=null;         // override carregado do Firebase
@@ -1086,7 +1091,7 @@ function setState(patch){
 // ════════════════════════════════════
 async function saveToHistory(){
   const prog=getProg();
-  if(prog.total===0||_confSaved)return;
+  if(prog.total===0||confJaSalva())return;
   // Sem nenhum item respondido não há conferência a registrar (abrir o Resumo vazio gravava 0% no histórico FIFO).
   if(!getAct().some(s=>secChecks(s).some(r=>responses[rowKey(s,r)]?.status)))return;
   _confSaved=true;
@@ -1103,6 +1108,7 @@ async function saveToHistory(){
     ncs:getNCs(),
   };
   history_cbm.unshift(entry);
+  try{localStorage.setItem(CONF_ID,String(entry.id));}catch(e){}
   if(history_cbm.length>10)history_cbm.pop();
   try{localStorage.setItem('cbm5_hist',JSON.stringify(history_cbm));}catch(e){}
   try{await fbDb.ref('historico').set(history_cbm);}catch(e){}
@@ -1338,9 +1344,9 @@ function gerarParte(){
 function downloadParteDoc(corpo,ncs,now){
   const ano=now.getFullYear();
   const dataFmt=now.toLocaleDateString('pt-BR',{day:'numeric',month:'long',year:'numeric'});
-  const prevConf=history_cbm.length>1?history_cbm[1]:null;
-  const isDupNC=nc=>prevConf?prevConf.ncs.some(p=>p.veh===nc.veh&&p.sec===nc.sec&&p.name===nc.name):false;
-  const linhasNC=ncs.map((nc,i)=>{const dup=isDupNC(nc);const dupNote=dup?` ▲ Já reportado em ${new Date(prevConf.date).toLocaleDateString('pt-BR')}`:'';return `<tr style="background:${i%2?'#fff5f5':'#fff'}">
+  const prevC=prevConf();
+  const isDupNC=nc=>prevC?prevC.ncs.some(p=>p.veh===nc.veh&&p.sec===nc.sec&&p.name===nc.name):false;
+  const linhasNC=ncs.map((nc,i)=>{const dup=isDupNC(nc);const dupNote=dup?` ▲ Já reportado em ${new Date(prevC.date).toLocaleDateString('pt-BR')}`:'';return `<tr style="background:${i%2?'#fff5f5':'#fff'}">
     <td style="padding:6px 8px;border:1px solid #ccc;font-size:11pt">${nc.veh==='SOP'?'Sala':esc(nc.veh)}</td>
     <td style="padding:6px 8px;border:1px solid #ccc;font-size:11pt">${esc(nc.sec)}</td>
     <td style="padding:6px 8px;border:1px solid #ccc;font-size:11pt">${esc(nc.name)} (${esc(nc.qty)})</td>
@@ -1833,7 +1839,7 @@ ${getAct().map((s,i)=>{const sp=secProg(s),veh=VH.find(v=>v.id===s.vid),p=sp.tot
 </div>
 ${ncs.length?`<div class="card" style="border-left:3px solid var(--red)"><div class="label" style="color:var(--red)">Não Conformidades (${ncs.length})</div>${ncs.map(nc=>`<div class="nc-item"><div style="font-size:13px;color:var(--red)">${nc.veh==='SOP'?'Sala':esc(nc.veh)} — ${esc(nc.sec)}</div><div style="font-weight:600;font-size:14px">${esc(nc.name)}</div>${nc.obs?`<div style="font-size:13px;color:var(--red-dark);margin-top:4px">› ${esc(nc.obs)}</div>`:''}</div>`).join('')}</div>`:''}
 <button onclick="gerarRelatorio()" class="btn-red">${icn('download')} GERAR RELATÓRIO (HTML)</button>
-${(()=>{const _prev=history_cbm.length>1?history_cbm[1]:null;const _reps=_prev?ncs.filter(nc=>_prev.ncs.some(p=>p.veh===nc.veh&&p.sec===nc.sec&&p.name===nc.name)):[];return _reps.length?`<div style="background:var(--amber-light);border:1px solid var(--amber);border-radius:8px;padding:10px;margin-bottom:8px;font-size:12px;color:var(--amber)">${icn('warning')} ${_reps.length} NC(s) já reportada(s) na conferência anterior. Serão indicadas no documento Word.</div>`:'';})()}
+${(()=>{const _prev=prevConf();const _reps=_prev?ncs.filter(nc=>_prev.ncs.some(p=>p.veh===nc.veh&&p.sec===nc.sec&&p.name===nc.name)):[];return _reps.length?`<div style="background:var(--amber-light);border:1px solid var(--amber);border-radius:8px;padding:10px;margin-bottom:8px;font-size:12px;color:var(--amber)">${icn('warning')} ${_reps.length} NC(s) já reportada(s) na conferência anterior. Serão indicadas no documento Word.</div>`:'';})()}
 ${ncs.length?`<button onclick="gerarParte()" class="btn-gold">${icn('file')} GERAR PARTE (Word) — ${ncs.length} N/C(s)</button>`:''}
 <button onclick="voltarConf()" class="btn-gray">${icn('arrowLeft')} RETORNAR À CONFERÊNCIA</button>
 <button onclick="finalizarChecklist()" class="btn-red" style="margin-top:6px">${icn('checkCircle')} FINALIZAR</button>
@@ -1920,7 +1926,7 @@ window.goHome=()=>setState({screen:'home'});
 window.toggleAll=()=>{setState({selVids:selVids.length===VH.length?[]:VH.map(v=>v.id)});};
 window.toggleHistoryNC=id=>{const el=document.getElementById('hnc_'+id);if(el)el.style.display=el.style.display==='none'?'block':'none';};
 window.toggleVeh=v=>{setState({selVids:selVids.includes(v)?selVids.filter(x=>x!==v):[...selVids,v]});};
-window.startNew=()=>{if(!selVids.length||!identOk())return;responses={};_confSaved=false;save();setState({secIdx:0,screen:'checklist',_keepScroll:false});};
+window.startNew=()=>{if(!selVids.length||!identOk())return;responses={};_confSaved=false;limpaMarcaConf();save();setState({secIdx:0,screen:'checklist',_keepScroll:false});};
 window.retomar=()=>{
   const secs=getAct();let last=0;
   secs.forEach((s,i)=>{if(secChecks(s).some(row=>responses[rowKey(s,row)]?.status))last=i;});
@@ -2032,12 +2038,12 @@ window.nextSec=()=>{
   }
 };
 window.prevSec=()=>{if(secIdx>0)setState({secIdx:secIdx-1,_keepScroll:false});};
-window.goSummary=()=>{saveToHistory();setState({screen:'summary'});};
+window.goSummary=()=>{setState({screen:'summary'});};
 window.goSection=i=>{setState({secIdx:i,screen:'checklist',_keepScroll:false});};
 window.voltarConf=()=>{setState({screen:'checklist'});};
 window.gerarParte=gerarParte;
 window.gerarRelatorio=gerarRelatorio;
-window.askReset=()=>{showModal({title:icn('warning',18)+' Nova Conferência',msg:'Todos os dados serão apagados permanentemente. Tem certeza?',confirmLabel:'SIM, APAGAR TUDO',cancelLabel:'Cancelar',callback:()=>{responses={};_confSaved=false;try{localStorage.removeItem(LS.R);localStorage.removeItem(LS.V);}catch(_){}setState({secIdx:0,selVids:VH.map(v=>v.id),screen:'home'});}});};
+window.askReset=()=>{showModal({title:icn('warning',18)+' Nova Conferência',msg:'Todos os dados serão apagados permanentemente. Tem certeza?',confirmLabel:'SIM, APAGAR TUDO',cancelLabel:'Cancelar',callback:()=>{responses={};_confSaved=false;limpaMarcaConf();try{localStorage.removeItem(LS.R);localStorage.removeItem(LS.V);}catch(_){}setState({secIdx:0,selVids:VH.map(v=>v.id),screen:'home'});}});};
 
 // ════════════════════════════════════
 //  FINALIZAR SERVIÇO
@@ -2061,7 +2067,7 @@ function executarFinalizacao(){
   const voltaSelectResp=sessionResp?.viaFuncional===true;
   // Reset completo do estado
   responses={};secIdx=0;selVids=VH.map(v=>v.id);
-  _confSaved=false;_parteGerada=false;
+  _confSaved=false;limpaMarcaConf();_parteGerada=false;
   try{localStorage.removeItem(LS.R);localStorage.removeItem(LS.V);}catch(_){}
   if(voltaSelectResp){sessionResp=null;ident={name:'',guerra:'',rank:'',re:''};persistSessionResp();}
 
