@@ -384,7 +384,7 @@ window.selectResponsavel=uid=>{
 };
 window.trocarResponsavel=()=>{
   if(!confirm('Trocar responsável? As respostas da conferência em andamento serão descartadas.'))return;
-  responses={};secIdx=0;_confSaved=false;limpaMarcaConf();_parteGerada=false;
+  responses={};secIdx=0;limpaMarcaConf();_parteGerada=false;
   try{localStorage.removeItem(LS.R);}catch(e){}
   sessionResp=null;
   ident={name:'',guerra:'',rank:'',re:''};
@@ -1045,7 +1045,6 @@ let selVids=VH.map(v=>v.id), responses={}, modal=null;
 // FIX: flag para controlar scroll — só reseta ao mudar de seção
 let _keepScroll=false;
 let history_cbm=[];
-let _confSaved=false;
 const CONF_ID='cbm5_conf_id';
 const listaDoNo=v=>Array.isArray(v)?v:(v&&typeof v==='object'?Object.values(v):[]);
 const idMarca=()=>{try{return localStorage.getItem(CONF_ID);}catch(e){return null;}};
@@ -1085,7 +1084,6 @@ function setState(patch){
   if('secIdx'       in patch) secIdx=patch.secIdx;
   if('selVids'      in patch) selVids=patch.selVids;
   if('_keepScroll'  in patch) _keepScroll=patch._keepScroll;
-  if('_confSaved'   in patch) _confSaved=patch._confSaved;
   if('_parteGerada' in patch) _parteGerada=patch._parteGerada;
   render();
 }
@@ -1953,7 +1951,7 @@ window.goHome=()=>setState({screen:'home'});
 window.toggleAll=()=>{setState({selVids:selVids.length===VH.length?[]:VH.map(v=>v.id)});};
 window.toggleHistoryNC=id=>{const el=document.getElementById('hnc_'+id);if(el)el.style.display=el.style.display==='none'?'block':'none';};
 window.toggleVeh=v=>{setState({selVids:selVids.includes(v)?selVids.filter(x=>x!==v):[...selVids,v]});};
-window.startNew=()=>{if(!selVids.length||!identOk())return;responses={};_confSaved=false;limpaMarcaConf();save();setState({secIdx:0,screen:'checklist',_keepScroll:false});};
+window.startNew=()=>{if(!selVids.length||!identOk())return;responses={};limpaMarcaConf();save();setState({secIdx:0,screen:'checklist',_keepScroll:false});};
 window.retomar=()=>{
   const secs=getAct();let last=0;
   secs.forEach((s,i)=>{if(secChecks(s).some(row=>responses[rowKey(s,row)]?.status))last=i;});
@@ -2070,7 +2068,7 @@ window.goSection=i=>{setState({secIdx:i,screen:'checklist',_keepScroll:false});}
 window.voltarConf=()=>{setState({screen:'checklist'});};
 window.gerarParte=gerarParte;
 window.gerarRelatorio=gerarRelatorio;
-window.askReset=()=>{showModal({title:icn('warning',18)+' Nova Conferência',msg:'Todos os dados serão apagados permanentemente. Tem certeza?',confirmLabel:'SIM, APAGAR TUDO',cancelLabel:'Cancelar',callback:()=>{responses={};_confSaved=false;limpaMarcaConf();try{localStorage.removeItem(LS.R);localStorage.removeItem(LS.V);}catch(_){}setState({secIdx:0,selVids:VH.map(v=>v.id),screen:'home'});}});};
+window.askReset=()=>{showModal({title:icn('warning',18)+' Nova Conferência',msg:'Todos os dados serão apagados permanentemente. Tem certeza?',confirmLabel:'SIM, APAGAR TUDO',cancelLabel:'Cancelar',callback:()=>{responses={};limpaMarcaConf();try{localStorage.removeItem(LS.R);localStorage.removeItem(LS.V);}catch(_){}setState({secIdx:0,selVids:VH.map(v=>v.id),screen:'home'});}});};
 
 // ════════════════════════════════════
 //  FINALIZAR SERVIÇO
@@ -2095,7 +2093,7 @@ function executarFinalizacao(){
   const voltaSelectResp=sessionResp?.viaFuncional===true;
   // Reset completo do estado
   responses={};secIdx=0;selVids=VH.map(v=>v.id);
-  _confSaved=false;limpaMarcaConf();_parteGerada=false;
+  limpaMarcaConf();_parteGerada=false;
   try{localStorage.removeItem(LS.R);localStorage.removeItem(LS.V);}catch(_){}
   if(voltaSelectResp){sessionResp=null;ident={name:'',guerra:'',rank:'',re:''};persistSessionResp();}
 
