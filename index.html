@@ -1454,7 +1454,7 @@ function renderAdmin(){
       <input id="adm_guerra_${u.uid}" type="text" placeholder="Nome de Guerra" aria-label="Nome de guerra" value="${esc(u.guerra||'')}" style="color:var(--ember);font-weight:700">
       <select id="adm_rank_${u.uid}" aria-label="Graduação">
         <option value="">Graduação *</option>
-        ${rankOpts.map(r=>`<option value="${r}" ${u.rank===r?'selected':''}>${r}</option>`).join('')}
+        ${(u.rank&&!rankOpts.includes(u.rank)?[...rankOpts,u.rank]:rankOpts).map(r=>`<option value="${esc(r)}" ${u.rank===r?'selected':''}>${esc(r)}</option>`).join('')}
       </select>
       <input id="adm_re_${u.uid}" type="text" placeholder="Id.Func" aria-label="Identificação funcional" value="${esc(u.re||'')}">
       ${isPending
