@@ -753,7 +753,7 @@ window.adminSaveChecklist=async()=>{
     // Dual-write: `rows` é a verdade; `items` é o espelho achatado pro cliente PWA com bundle
     // antigo em cache não cair silenciosamente no checklist de fábrica (plano §2.4).
     const payload=editingSC.map(sec=>({
-      id:sec.id,vid:sec.vid,title:sec.title,icon:sec.icon,
+      id:sec.id,vid:sec.vid,title:sec.title,icon:sec.icon||'',
       rows:sec.rows,
       items:sec.rows.filter(r=>r.t==='i').map(r=>[r.name,r.qty||'—'])
     }));
@@ -762,7 +762,8 @@ window.adminSaveChecklist=async()=>{
     alert('✅ Checklist salvo! Todas as guarnições verão as alterações.');
     renderAdmin();
   }catch(e){
-    alert('Erro ao salvar. Verifique sua conexão.');
+    console.error('CBM: erro ao salvar checklist_custom',e);
+    alert('Erro ao salvar: '+(e&&e.code||e&&e.message||'desconhecido')+(e&&e.code==='PERMISSION_DENIED'?' (sua conta não tem permissão de admin no banco).':'. Verifique sua conexão.'));
     if(btn){btn.disabled=false;btn.innerHTML=icn('save')+' SALVAR CHECKLIST';}
   }
 };
@@ -1122,7 +1123,8 @@ async function loadCustomChecklist(){
   try{
     const snap=await fbDb.ref('checklist_custom').once('value');
     const d=snap.val();
-    if(d&&_validateCustomSC(d)){customSC=d;}
+    const ok=d&&_cleanCustomSC(d);
+    if(ok&&ok.length){customSC=ok;}
     else if(d){console.warn('CBM: checklist_custom com estrutura inválida — usando padrão.');customSC=null;}
   }catch(e){console.warn('CBM: erro ao carregar checklist_custom',e);}
 }
@@ -1138,21 +1140,29 @@ async function loadCustomVeiculos(){
   }catch(e){console.warn('CBM: erro ao carregar viaturas_custom (nó pode não ter regra ainda)',e);}
 }
 // ── Validador estrutural — impede crash por dado malformado no Firebase ──
-function _validateCustomSC(data){
-  if(!Array.isArray(data)||data.length===0)return false;
+// Descarta só a seção ruim (o resto sobrevive). Seção sem rows/items vale como vazia: o RTDB
+// não grava array vazio, então uma seção nova sem linha volta do banco sem nenhum dos dois campos.
+function _cleanCustomSC(data){
+  if(!Array.isArray(data)||data.length===0)return null;
   const validVids=new Set(VH.map(v=>v.id));
   const validRow=r=>r&&typeof r==='object'&&(r.t==null||r.t==='i'||r.t==='h')&&r.id!=null&&typeof r.name==='string'
     &&(r.qty==null||typeof r.qty==='string')
     &&(r.subs==null||(Array.isArray(r.subs)&&r.subs.every(sb=>sb&&sb.id!=null&&typeof sb.name==='string')));
-  return data.every(sec=>{
+  const validSec=sec=>{
     if(!sec||typeof sec!=='object')return false;
     if(typeof sec.id!=='string'||!sec.id)return false;
     if(typeof sec.vid!=='string'||!validVids.has(sec.vid))return false;
     if(typeof sec.title!=='string')return false;
     if(Array.isArray(sec.rows))return sec.rows.every(validRow);
     if(Array.isArray(sec.items))return sec.items.every(it=>Array.isArray(it)&&it.length>=2&&typeof it[0]==='string'&&typeof it[1]==='string');
-    return false;
+    return sec.rows==null&&sec.items==null;
+  };
+  const out=data.filter(sec=>{
+    const ok=validSec(sec);
+    if(!ok)console.warn('CBM: seção de checklist_custom inválida descartada',sec&&sec.id);
+    return ok;
   });
+  return out.map(sec=>(Array.isArray(sec.rows)||Array.isArray(sec.items))?sec:{...sec,rows:[]});
 }
 
 // ════════════════════════════════════
