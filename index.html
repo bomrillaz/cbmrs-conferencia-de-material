@@ -1123,6 +1123,31 @@ async function loadHistory(){
     try{const h=localStorage.getItem('cbm5_hist');if(h)history_cbm=JSON.parse(h);}catch(e2){}
   }
 }
+// Remove UMA conferência pelo id, via transaction: não atropela gravação simultânea em campo (set de lista inteira atropelaria).
+// A regra do RTDB deixa qualquer aprovado escrever em `historico`; isAdminUI() aqui é só UX.
+window.excluirConferencia=async id=>{
+  const e=history_cbm.find(x=>x&&x.id===id);
+  if(!e)return;
+  const quando=new Date(e.date).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'});
+  const quem=(e.ident||{}).guerra||(e.ident||{}).name||'—';
+  const vts=(e.viaturas||[]).join(', ')||'sem viatura';
+  if(!confirm('Excluir esta conferência?\n\n'+quando+' · '+quem+' · '+vts+' · '+(e.pct||0)+'%\n\nNão dá para desfazer.'))return;
+  try{
+    await fbDb.ref('historico').once('value');
+    const r=await fbDb.ref('historico').transaction(cur=>{
+      if(cur==null)return cur;
+      const lista=Array.isArray(cur)?cur:Object.values(cur);
+      return lista.filter(x=>x&&x.id!==id);
+    });
+    const v=r.snapshot.val();
+    history_cbm=Array.isArray(v)?v:(v?Object.values(v):[]);
+    try{localStorage.setItem('cbm5_hist',JSON.stringify(history_cbm));if(localStorage.getItem(CONF_ID)===String(id))limpaMarcaConf();}catch(e2){}
+  }catch(err){
+    alert('Erro ao excluir: '+(err&&err.code||err&&err.message||'desconhecido'));
+    return;
+  }
+  render();
+};
 window.clearHistory=async()=>{
   if(!confirm('Apagar todo o histórico de conferências?'))return;
   history_cbm=[];
@@ -1898,6 +1923,7 @@ ${ncs.length?`<button onclick="gerarParte()" class="btn-gold">${icn('file')} GER
           </div>
           <div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:4px">${vBadges}</div>
           ${ncBlock}
+          ${isAdminUI()?`<button onclick="excluirConferencia(${e.id})" class="btn-sm" style="margin-top:10px;color:var(--red)">${icn('trash',13)} Excluir esta conferência</button>`:''}
         </div>`;
       }).join('');
 
