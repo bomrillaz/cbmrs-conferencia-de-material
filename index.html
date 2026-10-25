@@ -1087,6 +1087,8 @@ function setState(patch){
 async function saveToHistory(){
   const prog=getProg();
   if(prog.total===0||_confSaved)return;
+  // Sem nenhum item respondido não há conferência a registrar (abrir o Resumo vazio gravava 0% no histórico FIFO).
+  if(!getAct().some(s=>secChecks(s).some(r=>responses[rowKey(s,r)]?.status)))return;
   _confSaved=true;
   const entry={
     id:Date.now(),
