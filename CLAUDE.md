@@ -152,13 +152,25 @@ Trabalho em português.
 Memória do projeto vive no vault Obsidian, fora do repo:
 `Documents\Claude\vault\10-projetos\bomrillaz-conferencia\_estado.md`.
 
-**Início** (sessão que mexe em código ou no banco):
-1. Ler `_estado.md` do vault — autoridade do estado atual (pendências, decisões, baseline do verify).
-2. Rodar `verify_conferencia.sh` e comparar com as contagens do `_estado.md`.
+**Padrão da empresa (desde 25/10/2026):** `iniciar` e `encerrar` seguem a metodologia Bomrillaz, nascida no
+CTSP: `Documents\Claude\vault\20-processo\protocolo-iniciar-e-encerrar-padrao-bomrillaz.md` (resumo no
+`CLAUDE.md` global). Aqui ficam só os passos próprios deste projeto.
 
-**Fim — comando `encerrar`:**
-1. Atualizar `_estado.md` do vault: o que foi feito, o que ficou aberto, decisões tomadas, commits não
-   publicados. Autossuficiente — quem só lê o `_estado.md` deve entender o estado sem abrir mais nada.
-2. Se um `PLANO_*.md` foi totalmente executado: apagar (mesmo padrão do CTSP — plano executado é plano
-   apagado) e avisar o João. Se ficou parcialmente executado, manter e marcar no `_estado.md` o que falta.
-3. Registrar commits pendentes de push e a razão de não ter subido ainda, se for o caso.
+**`iniciar`** (sessão que mexe em código ou no banco):
+1. Ler `_estado.md` do vault: autoridade do estado atual (pendências, baseline do verify).
+2. Ler só as notas de `licoes/`/`decisoes/` linkadas nas pendências que a sessão vai tocar.
+3. Rodar `verify_conferencia.sh` e comparar com a baseline; divergência = investigar antes de alterar.
+4. `git status` limpo antes de editar.
+
+**`encerrar`:**
+1. Bullet da sessão (`bNN`) no topo de `_diario.md`: feito, decisões, commits não publicados e por quê.
+2. `_estado.md`: bloco "Estado atual" (versão, cache, HEAD, verify) e "Pendências abertas". Nunca ✅:
+   o que fechou sai para `fechado/AAAA-MM.md` com o carimbo da sessão; pendência nova entra no bullet e na
+   seção, com o ponto exato e o que reconferir. Autossuficiente, teto de 15.000 caracteres.
+3. Nota atômica em `licoes/` ou `decisoes/` (técnica reaproveitável vai para `25-tecnica/`).
+4. Relato completo na pasta `historico` do vault (nome `historico_bNN_Titulo_data`).
+5. `PLANO_*.md` totalmente executado: apagar e avisar o João; parcial: manter e marcar no `_estado.md` o que falta.
+6. `python ~/Documents/Claude/ferramentas/vault_lint.py` com 0 link quebrado.
+7. Push só com OK do João, dizendo o que sobe e o que fica.
+
+Em sessão orquestrada, só o orquestrador roda o `encerrar`.
