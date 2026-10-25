@@ -19,7 +19,8 @@ Trabalho em português.
   **Exceções deliberadas, não tocar sem decisão nova com o João:**
   - Array `VH` (cores por-viatura, decorativas, uma por veículo) — paleta própria, não migra pros tokens.
   - `downloadParteDoc()`/`gerarParte()` (documento Word) — usa hex **literal**, não `var()`: o Word não
-    resolve CSS custom properties. Só o cabeçalho de tabela foi ajustado pro vermelho da marca.
+    resolve CSS custom properties. Só o cabeçalho de tabela foi ajustado pro vermelho da marca
+    (`#C92211`, alinhado ao CTSP em 25/10/2026, b12; continua literal).
   - Brasão do CBMRS e fotos das viaturas — imagens PNG/JPEG embutidas em base64, cor cravada no pixel,
     mantidas como identidade oficial militar (decisão do João, não da marca Bomrillaz).
   - Tela de login (`renderAuth()`) usa `img/banner.jpg` (foto operacional) + `assets/cesar-coin.png`
