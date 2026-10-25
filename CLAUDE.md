@@ -7,7 +7,7 @@ Trabalho em português.
 
 ## 1. ARQUITETURA
 
-- **Um único `index.html`** (~1560 linhas, ~234 KB). Sem `data.js` separado.
+- **Um único `index.html`** (~2200 linhas, ~326 KB, medido em 25/10/2026). Sem `data.js` separado.
 - **PWA instalável** (b1, 2026-08-19): `manifest.webmanifest` + `sw.js` + `assets/icon-192.png` /
   `icon-512.png` / `icon-maskable-512.png` (gerados a partir do brasão CBMRS já embutido no site).
   `sw.js` segue a MESMA regra de ouro do CTSP: nunca intercepta Firebase dinâmico
@@ -50,6 +50,24 @@ Trabalho em português.
 - Viaturas: `ar797` (AR 797, Ambulância de Resgate), `abt660` (ABT 660), `abt9468` (ABT 9468),
   `atm1209` (ATM 1209, Auto Transporte de Materiais), `sop` (Sala de Operações).
 - Export de relatório em Word (`.doc`) e impressão HTML. Histórico FIFO de 10 conferências.
+- **Histórico (b12, v2026.8.1) — regras que já quebraram:**
+  - Grava SÓ ao concluir a última seção (`executarFinalizacao`); o Resumo (`goSummary`) é só
+    visualização. Antes, abrir o Resumo gravava conferência, inclusive com 0 item respondido.
+  - Conferência sem nenhum item respondido não grava (guarda em `saveToHistory`).
+  - `saveToHistory` faz upsert por **id** via `transaction()`, nunca `set()` da lista inteira (outro
+    aparelho pode gravar ao mesmo tempo). A marca `localStorage cbm5_conf_id` diz qual entrada é a
+    conferência atual; `posConf()`/`confJaSalva()`/`prevConf()` acham a entrada por essa id, nunca
+    por posição. "Conferência anterior" (aviso de N/C repetida e Word) = `prevConf()`.
+  - O RTDB descarta array vazio: toda leitura trata `rows`/`items`/`ncs`/`subs` ausentes como vazios
+    (`_cleanCustomSC`, `(x.ncs||[])`, helper `listaDoNo()`).
+  - Admin exclui UMA conferência pelo id (`excluirConferencia`, transaction). A regra do RTDB de
+    `historico` libera escrita a qualquer aprovado; o botão só para admin é UX, não perímetro.
+- **Postos (`rankOpts`, único ponto da lista):** inclui "Soldado Temporário" (b12). Rank gravado fora
+  da lista entra como option selecionada; nunca cai no primeiro item (antes trocava o posto calado).
+- **Identidade Bomrillaz (b12):** tokens alinhados ao `:root` do CTSP (`--red #C92211`, `--dur-*`,
+  `--ease-*`, `--font-display`, `--white`, `--z-*`), Barlow Condensed **local** (`assets/fonts/`,
+  `@font-face`), corpo `-apple-system`. `--green-deep` é token local da Conferência. Tema escuro fora,
+  por decisão do João (só claro).
 - **Painel admin**: promoção/revogação de admin, editor de checklist livre por viatura (seção/título/
   item/subitem, CRUD completo + drag-and-drop via Pointer Events), toggle de "conta funcional".
 - **Checklist custom (`checklist_custom` no RTDB) em dual-write** (v2026.7.0): `rows` (formato novo,
@@ -101,9 +119,10 @@ Trabalho em português.
   trivial. Sonnet é o padrão; Opus só na fase de decisão de mudança estrutural.
 - Verificação leve: `bash verify_conferencia.sh` (contagens de `esc()`/`innerHTML`, viaturas presentes,
   sintaxe balanceada). Rodar antes de qualquer commit que toque `index.html`.
-  Baseline 2026-08-20 (pós auditoria estética + aria-label + renomear viatura): `esc()=97` ·
-  `innerHTML=21` · `initializeApp=1` · `ADMIN_EMAIL=3` · `unsafe-eval=0` · `checkRateLimit=2` ·
-  `patchItemStatus=2` · `patchProgress=2`. Divergência = investigar antes de seguir.
+  Baseline 2026-10-25 (b12, v2026.8.1): `esc()=99` · `innerHTML=21` · `initializeApp=1` ·
+  `ADMIN_EMAIL=4` · `unsafe-eval=0` · `checkRateLimit=2` · `patchItemStatus=2` · `patchProgress=2`.
+  Divergência = investigar antes de seguir. (`ADMIN_EMAIL` 3→4 na b11: filtro do admin master no
+  `loadEfetivo`; `esc()` 97→99 na b12: o rank fora da lista entra escapado no select de graduação.)
   (`innerHTML` subiu 18→21: 3 pontos que trocaram `.textContent` por `.innerHTML` pra caber ícone SVG —
   botão salvar checklist (2x) e botão Próxima/Concluir do patch anti-piscada, todos com texto fixo do
   código, não dado de usuário — não precisam de `esc()`.)
