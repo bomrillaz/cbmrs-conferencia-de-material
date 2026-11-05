@@ -41,14 +41,20 @@ Trabalho em português.
   `loadCustomVeiculos()` (chamada no boot, `onAuthStateChanged`, antes de `loadCustomChecklist()`).
   Só o nome muda — tipo/cor/imagem continuam fixos no array `VH` (`index.html`), fora de escopo.
   Regra do RTDB publicada pelo João em 2026-08-20 (`regras_propostas_com_viaturas.json`).
+  Grava com `update()`, nunca `set()`: o mesmo nó guarda a marca `oculta`.
+- **Ocultar viatura (b13, v2026.8.2)**: mesmo lugar do Renomear, botão "Ocultar / Mostrar viatura" grava
+  `viaturas_custom/{vid}.oculta`. Viatura oculta some da home (`vhAtivas()`) e da conferência (`getAct()`
+  ignora mesmo se estiver no `selVids` do celular); checklist intacto. Para viatura emprestada/baixada,
+  nunca tirar do array `VH`.
 - Site: https://bomrillaz.github.io/cbmrs-conferencia-de-material/
 - Repo: github.com/bomrillaz/cbmrs-conferencia-de-material, branch `main`.
 - Firebase: projeto `cbmrs-ti`, RTDB `cbmrs-ti-default-rtdb` — **diferente do `ctsp-estudos`**, não
   compartilha Auth nem banco.
 - Firebase Auth carregado via `<script src="...gstatic.com/firebasejs/10.14.1/...">` (compat), não
   JSONP dinâmico.
-- Viaturas: `ar797` (AR 797, Ambulância de Resgate), `abt660` (ABT 660), `abt9468` (ABT 9468),
-  `atm1209` (ATM 1209, Auto Transporte de Materiais), `sop` (Sala de Operações).
+- Viaturas: `ar797` (exibida como **AR 1629** desde 04/11/2026 — viatura nova, nome via
+  `viaturas_custom`; o id interno continua `ar797`), `abt660` (ABT 660), `abt9468` (ABT 9468, oculta
+  desde 04/11/2026: emprestada), `atm1209` (ATM 1209, Auto Transporte de Materiais), `sop` (Sala de Operações).
 - Export de relatório em Word (`.doc`) e impressão HTML. Histórico FIFO de 10 conferências.
 - **Histórico (b12, v2026.8.1) — regras que já quebraram:**
   - Grava SÓ ao concluir a última seção (`executarFinalizacao`); o Resumo (`goSummary`) é só
@@ -91,6 +97,11 @@ Trabalho em português.
   `_regras_rtdb.md` do vault. Nó
   `efetivo` publicado em 2026-08-19 (leitura: qualquer aprovado · escrita: só admin), necessário pro
   login funcional listar o efetivo sem a conta funcional precisar ser admin.
+  **Desde 2026-11-04 (b13)** em produção: `regras_propostas_usuarios_e_historico.json`. Cada conta só
+  CRIA o próprio cadastro, pendente (antes podia se aprovar e virar admin pelo console); `aprovado`/
+  `admin`/`funcional` só o admin muda; o e-mail do admin master cria o próprio cadastro já admin. No
+  `historico`, só admin deixa o nó vazio. Mudou regra → rodar a bateria no emulador antes do Console
+  (`materiais/entregas/testes/t_b13_regras_usuarios_historico.js`, instruções no topo do `t_b13_regra_historico.js`).
 - **`firebase.initializeApp` 1x só.**
 - Toda saída de dado de banco que vai pro `innerHTML` passa por `esc()` antes.
 - **Rate limit no login** (`checkRateLimit()`, b1 2026-08-19): 5 tentativas / 5 min via `localStorage`,
@@ -119,7 +130,7 @@ Trabalho em português.
   trivial. Sonnet é o padrão; Opus só na fase de decisão de mudança estrutural.
 - Verificação leve: `bash verify_conferencia.sh` (contagens de `esc()`/`innerHTML`, viaturas presentes,
   sintaxe balanceada). Rodar antes de qualquer commit que toque `index.html`.
-  Baseline 2026-10-25 (b12, v2026.8.1): `esc()=99` · `innerHTML=21` · `initializeApp=1` ·
+  Baseline 2026-10-25 (b12, v2026.8.1; igual na b13, v2026.8.2): `esc()=99` · `innerHTML=21` · `initializeApp=1` ·
   `ADMIN_EMAIL=4` · `unsafe-eval=0` · `checkRateLimit=2` · `patchItemStatus=2` · `patchProgress=2`.
   Divergência = investigar antes de seguir. (`ADMIN_EMAIL` 3→4 na b11: filtro do admin master no
   `loadEfetivo`; `esc()` 97→99 na b12: o rank fora da lista entra escapado no select de graduação.)
