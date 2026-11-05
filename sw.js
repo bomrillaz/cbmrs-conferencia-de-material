@@ -6,7 +6,7 @@
    - navegação (HTML): network-first (offline cai no cache).
    - demais GET elegíveis: stale-while-revalidate. */
 
-const CACHE = 'cbmrs-conferencia-cache-v4';
+const CACHE = 'cbmrs-conferencia-cache-v5';
 const SAME = [
   './', 'index.html', 'manifest.webmanifest',
   'assets/icon-192.png', 'assets/icon-512.png', 'assets/cesar-coin.png',

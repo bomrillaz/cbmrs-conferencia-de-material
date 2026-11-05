@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Sistema de conferência de material do Corpo de Bombeiros Militar — 1ª CiaBM / 4º PelBM — São Marcos RS">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' https://*.googleapis.com https://*.gstatic.com https://*.firebase.com https://*.firebaseio.com https://*.firebaseapp.com https://www.recaptcha.net https://recaptcha.net https://www.google.com https://www.gstatic.com wss://*.firebaseio.com data: blob:; object-src 'none'; base-uri 'self'; form-action 'none';">
-  <!-- CBMRS — Conferência de Material 2026 · v2026.8.1 — histórico por id, exclusão de conferência pelo admin, Resumo só visualização -and-drop) + login funcional com responsável selecionável -->
+  <!-- CBMRS — Conferência de Material 2026 · v2026.8.2 — ocultar viatura pelo painel admin (viatura fora do quartel) -and-drop) + login funcional com responsável selecionável -->
   <title>CBMRS — Conferência de Material | 1ª CiaBM · 4º PelBM</title>
   <meta name="theme-color" content="#D32412">
   <link rel="manifest" href="manifest.webmanifest">
@@ -458,10 +458,20 @@ window.adminSaveVehName=async(vid)=>{
   const val=document.getElementById('veh_name_'+vid)?.value?.trim();
   if(!val){alert('Preencha o nome da viatura.');return;}
   try{
-    await fbDb.ref('viaturas_custom/'+vid).set({name:val});
+    await fbDb.ref('viaturas_custom/'+vid).update({name:val});
     const v=VH.find(x=>x.id===vid);
     if(v)v.name=val;
     adminEditingVehName=null;
+    renderAdmin();
+  }catch(e){alert('Erro ao salvar. Verifique sua conexão.');}
+};
+// Viatura fora do quartel (emprestada, baixada): some da home e da conferência; o checklist fica intacto no banco.
+window.adminToggleVehOculta=async(vid)=>{
+  const v=VH.find(x=>x.id===vid);
+  if(!v)return;
+  try{
+    await fbDb.ref('viaturas_custom/'+vid).update({oculta:!v.oculta});
+    v.oculta=!v.oculta;
     renderAdmin();
   }catch(e){alert('Erro ao salvar. Verifique sua conexão.');}
 };
@@ -1178,6 +1188,7 @@ async function loadCustomVeiculos(){
       const v=VH.find(x=>x.id===vid);
       const nome=d[vid]&&typeof d[vid].name==='string'?d[vid].name.trim():'';
       if(v&&nome)v.name=nome;
+      if(v)v.oculta=!!(d[vid]&&d[vid].oculta===true);
     });
   }catch(e){console.warn('CBM: erro ao carregar viaturas_custom (nó pode não ter regra ainda)',e);}
 }
@@ -1272,7 +1283,8 @@ function restoreSessionResp(){try{const s=sessionStorage.getItem(SS_RESP);return
 //  UTILS
 // ════════════════════════════════════
 const getSC=()=>customSC||SC;
-const getAct=()=>getSC().filter(s=>selVids.includes(s.vid));
+const vhAtivas=()=>VH.filter(v=>!v.oculta);
+const getAct=()=>getSC().filter(s=>selVids.includes(s.vid)&&!VH.find(v=>v.id===s.vid)?.oculta);
 const identOk=()=>ident.name.trim()&&ident.rank.trim();
 // ── Gate de admin real: sempre a conta autenticada, nunca o responsável decorativo de conta funcional ──
 const isAdminUI=()=>userProfile?.admin===true;
@@ -1530,7 +1542,7 @@ function renderAdmin(){
   // ── Filtro de viatura ──
   const vehFilterBar=`<div style="display:flex;gap:6px;overflow-x:auto;padding:10px 14px;border-bottom:1px solid var(--border);background:var(--bg);-webkit-overflow-scrolling:touch;scrollbar-width:none">
   <button onclick="adminSetVehFilter('all')" style="white-space:nowrap;border-radius:6px;padding:5px 12px;cursor:pointer;font-size:12px;font-family:var(--font-display);font-weight:700;border:1.5px solid ${adminVehFilter==='all'?'var(--red)':'var(--border)'};background:${adminVehFilter==='all'?'var(--red)':'var(--bg)'};color:${adminVehFilter==='all'?'var(--white)':'var(--text3)'}">TODAS</button>
-  ${VH.map(v=>`<button onclick="adminSetVehFilter('${v.id}')" style="white-space:nowrap;border-radius:6px;padding:5px 12px;cursor:pointer;font-size:12px;font-family:var(--font-display);font-weight:700;border:1.5px solid ${adminVehFilter===v.id?v.color:'var(--border)'};background:${adminVehFilter===v.id?v.color:'var(--bg)'};color:${adminVehFilter===v.id?'var(--white)':'var(--text3)'}">${esc(v.name)}</button>`).join('')}
+  ${VH.map(v=>`<button onclick="adminSetVehFilter('${v.id}')" style="white-space:nowrap;border-radius:6px;padding:5px 12px;cursor:pointer;font-size:12px;font-family:var(--font-display);font-weight:700;border:1.5px solid ${adminVehFilter===v.id?v.color:'var(--border)'};background:${adminVehFilter===v.id?v.color:'var(--bg)'};color:${adminVehFilter===v.id?'var(--white)':'var(--text3)'}">${esc(v.name)}${v.oculta?' (oculta)':''}</button>`).join('')}
 </div>`;
 
   // ── Renomear viatura (só com uma viatura específica filtrada) ──
@@ -1548,8 +1560,12 @@ function renderAdmin(){
   </div>`
         :`<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px">
     <div style="font-size:12px;color:var(--text3)">Editando checklist de <strong style="color:var(--text)">${esc(veh.name)}</strong></div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">
     <button onclick="adminStartEditVehName('${veh.id}')" style="white-space:nowrap;background:transparent;border:1px dashed var(--border);border-radius:8px;padding:6px 10px;color:var(--text2);cursor:pointer;font-size:12px;font-weight:700;font-family:var(--font-display);min-height:32px">${icn('edit',13)} Renomear viatura</button>
-  </div>`;
+    <button onclick="adminToggleVehOculta('${veh.id}')" style="white-space:nowrap;background:transparent;border:1px dashed ${veh.oculta?'var(--red)':'var(--border)'};border-radius:8px;padding:6px 10px;color:${veh.oculta?'var(--red)':'var(--text2)'};cursor:pointer;font-size:12px;font-weight:700;font-family:var(--font-display);min-height:32px">${veh.oculta?'Mostrar viatura':'Ocultar viatura'}</button>
+    </div>
+  </div>
+  ${veh.oculta?`<div style="font-size:12px;color:var(--red);margin:-4px 0 10px">Viatura oculta: não aparece na tela inicial nem entra na conferência. O checklist continua guardado.</div>`:''}`;
     }
   }
 
@@ -1773,9 +1789,9 @@ ${isAdminUI()?`<button onclick="loadAdmin()" class="btn-gray" style="margin-bott
 <div class="card">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
     <div class="label" style="margin:0">Veículos / Equipamentos</div>
-    <button onclick="toggleAll()" class="btn-sm">${selVids.length===VH.length?'Desmarcar Todos':'Selecionar Todos'}</button>
+    <button onclick="toggleAll()" class="btn-sm">${vhAtivas().every(v=>selVids.includes(v.id))?'Desmarcar Todos':'Selecionar Todos'}</button>
   </div>
-  ${VH.map(v=>`<div class="veh-card ${selVids.includes(v.id)?'selected':''}" onclick="toggleVeh('${v.id}')" role="checkbox" aria-checked="${selVids.includes(v.id)}" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' ')toggleVeh('${v.id}')" style="border-left-color:${v.color}${selVids.includes(v.id)?';border-top-color:'+v.color+';border-bottom-color:'+v.color+';border-right-color:'+v.color:''}">
+  ${vhAtivas().map(v=>`<div class="veh-card ${selVids.includes(v.id)?'selected':''}" onclick="toggleVeh('${v.id}')" role="checkbox" aria-checked="${selVids.includes(v.id)}" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' ')toggleVeh('${v.id}')" style="border-left-color:${v.color}${selVids.includes(v.id)?';border-top-color:'+v.color+';border-bottom-color:'+v.color+';border-right-color:'+v.color:''}">
     <img src="${v.img}" alt="Viatura ${esc(v.name)} — ${esc(v.type)}" style="width:80px;height:52px;object-fit:cover;border-radius:8px;flex-shrink:0;display:block">
     <div style="flex:1">
       <div class="veh-name ff">${esc(v.name)}</div>
@@ -1785,7 +1801,7 @@ ${isAdminUI()?`<button onclick="loadAdmin()" class="btn-gray" style="margin-bott
   </div>`).join('')}
 </div>
 ${!identOk()?`<div style="background:var(--amber-light);border:1px solid var(--amber);border-radius:8px;padding:10px;margin-bottom:10px;font-size:12px;color:var(--amber)">${icn('warning')} Preencha Nome Completo e Graduação para iniciar.</div>`:''}
-<button id="btn-start" onclick="startNew()" class="btn-red" ${selVids.length===0||!identOk()?'disabled':''}>INICIAR CONFERÊNCIA ${icn('arrowRight')}</button>
+<button id="btn-start" onclick="startNew()" class="btn-red" ${!vhAtivas().some(v=>selVids.includes(v.id))||!identOk()?'disabled':''}>INICIAR CONFERÊNCIA ${icn('arrowRight')}</button>
 <button id="btn-hist-nav" class="btn-gray" style="margin-top:8px;border-color:var(--border)">
   ${icn('clipboard')} HISTÓRICO ${history_cbm.length>0?'('+history_cbm.length+' registros)':''}
 </button>
@@ -1948,10 +1964,10 @@ ${ncs.length?`<button onclick="gerarParte()" class="btn-gold">${icn('file')} GER
 // ════════════════════════════════════
 window.goHistory=()=>setState({screen:'history'});
 window.goHome=()=>setState({screen:'home'});
-window.toggleAll=()=>{setState({selVids:selVids.length===VH.length?[]:VH.map(v=>v.id)});};
+window.toggleAll=()=>{const at=vhAtivas().map(v=>v.id);setState({selVids:at.every(id=>selVids.includes(id))?[]:at});};
 window.toggleHistoryNC=id=>{const el=document.getElementById('hnc_'+id);if(el)el.style.display=el.style.display==='none'?'block':'none';};
 window.toggleVeh=v=>{setState({selVids:selVids.includes(v)?selVids.filter(x=>x!==v):[...selVids,v]});};
-window.startNew=()=>{if(!selVids.length||!identOk())return;responses={};limpaMarcaConf();save();setState({secIdx:0,screen:'checklist',_keepScroll:false});};
+window.startNew=()=>{if(!vhAtivas().some(v=>selVids.includes(v.id))||!identOk())return;responses={};limpaMarcaConf();save();setState({secIdx:0,screen:'checklist',_keepScroll:false});};
 window.retomar=()=>{
   const secs=getAct();let last=0;
   secs.forEach((s,i)=>{if(secChecks(s).some(row=>responses[rowKey(s,row)]?.status))last=i;});
