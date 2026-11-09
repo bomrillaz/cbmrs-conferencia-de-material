@@ -88,6 +88,7 @@
     .garage-hs:hover:not(:disabled),.garage-hs:focus-visible{border-color:var(--white);background:rgba(255,255,255,.14);outline:none}
     .garage-hs:disabled{cursor:default}
     .garage-hs span{position:absolute;left:50%;bottom:100%;transform:translateX(-50%);margin-bottom:2px;background:rgba(0,0,0,.6);color:var(--white);font-family:var(--font-display);font-size:11px;letter-spacing:.5px;padding:1px 6px;border-radius:4px;white-space:nowrap;pointer-events:none}
+    .garage-note{position:absolute;left:8px;right:8px;bottom:8px;background:rgba(0,0,0,.72);color:var(--white);font-size:13px;padding:8px 10px;border-radius:var(--radius-xs);text-align:center}
     .garage.zoom .garage-in{transform:translate(var(--tx),var(--ty)) scale(var(--s));transition:transform .6s var(--ease-out)}
     .garage.zoom{opacity:0;transition:opacity .25s ease .38s}
     .garage.zoom .garage-hs span{display:none}
@@ -898,7 +899,7 @@ const SC=[
     ['Colar Cervical','1G+1M+1P+2PP+2 Neo Nato+2 Regulável'],
   ]},
   {id:'ar_aph',vid:'ar797',title:'BOLSA APH — Kit Sinais Vitais',icon:'🎒',items:[
-    ['Maca de Arasto','1 UN'],['Glicosímetro + tiras reagentes e auto lancetas','TIRAS E LANCETAS'],
+    ['Maca de Arrasto','1 UN'],['Glicosímetro + tiras reagentes e auto lancetas','TIRAS E LANCETAS'],
     ['Oxímetro','1 UN'],['Caneta Lanterna','1 UN'],['Termômetro','1 UN'],
     ['Esfigmomanômetro','1 UN'],['Estetoscópio','1 UN'],
   ]},
@@ -925,7 +926,7 @@ const SC=[
     ['Caixa com Manuais do Caminhão','1 UN'],['EPRA Completa - Arelho e Carona','3 CIL. mín. 200 bar'],
   ]},
   {id:'b60_epra',vid:'abt660',title:'BOLSA APH — Kit Sinais Vitais',icon:'🎒',items:[
-    ['Maca de Arasto','1 UN'],['Glicosímetro + tiras reagentes e lancetas','TIRAS E LANCETAS'],
+    ['Maca de Arrasto','1 UN'],['Glicosímetro + tiras reagentes e lancetas','TIRAS E LANCETAS'],
     ['Oxímetro','1 UN'],['Caneta Lanterna','1 UN'],['Termômetro','1 UN'],
     ['Esfigmomanômetro','1 UN'],['Estetoscópio','1 UN'],
   ]},
@@ -1776,12 +1777,28 @@ function garageHtml(){
   const hs=GARAGE.filter(g=>ativos.has(g.vid)).map(g=>{const v=VH.find(x=>x.id===g.vid);return `<button class="garage-hs" data-vid="${g.vid}" onclick="garageGo('${g.vid}')" aria-label="Conferir ${esc(v.name)}" ${identOk()?'':'disabled'} style="left:${g.x}%;top:${g.y}%;width:${g.w}%;height:${g.h}%"><span>${esc(v.name)}</span></button>`;}).join('');
   return `<div class="garage${back&&!reduz?' back':''}" id="garage" ${back?`style="${garageVars(back)}"`:''}><div class="garage-in"><img src="img/quartel/fachada-horizontal.webp" alt="Fachada do quartel do 4º PelBM, São Marcos, com as viaturas" onerror="this.parentNode.parentNode.style.display='none'">${hs}</div></div>`;
 }
+// Reaproveita o <img> já decodificado entre re-renders da home (evita a piscada).
+let garageImgNode=null;
+function garageKeepImg(){
+  const cur=document.querySelector('#garage .garage-in img');if(!cur)return;
+  if(garageImgNode&&garageImgNode.complete&&garageImgNode.naturalWidth)cur.replaceWith(garageImgNode);
+  else garageImgNode=cur;
+}
 window.garageGo=vid=>{
   if(garageBusy||!identOk())return;
   const g=GARAGE.find(x=>x.vid===vid);if(!g)return;
-  const entra=()=>{garageBusy=false;garageBack=vid;selVids=[vid];startNew();};
+  // Conferência em andamento nunca é apagada: continua nela (startNew só no botão INICIAR ou garagem sem andamento).
+  const andamento=hasResume();
+  const outra=andamento&&!selVids.includes(vid);
+  const entra=()=>{garageBusy=false;garageBack=vid;if(andamento){retomar();return;}selVids=[vid];startNew();};
   const el=document.getElementById('garage');
   const reduz=window.matchMedia&&matchMedia('(prefers-reduced-motion:reduce)').matches;
+  if(outra&&el){
+    garageBusy=true;
+    const n=document.createElement('div');n.className='garage-note';n.setAttribute('role','status');
+    n.textContent='Há uma conferência em andamento. Abrindo ela…';el.appendChild(n);
+    setTimeout(()=>{garageBusy=false;garageBack=null;retomar();},1500);return;
+  }
   if(!el||reduz){entra();return;}
   garageBusy=true;el.setAttribute('style',garageVars(g));el.classList.add('zoom');setTimeout(entra,620);
 };
@@ -1847,6 +1864,7 @@ ${!identOk()?`<div style="background:var(--amber-light);border:1px solid var(--a
 </button>
 </div></div>`;
     document.getElementById('btn-hist-nav').addEventListener('click', function(){ setState({screen:'history'}); });
+    garageKeepImg();
     return;
   }
 
