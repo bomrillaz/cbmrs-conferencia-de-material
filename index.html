@@ -5,9 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Sistema de conferência de material do Corpo de Bombeiros Militar — 1ª CiaBM / 4º PelBM — São Marcos RS">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' https://*.googleapis.com https://*.gstatic.com https://*.firebase.com https://*.firebaseio.com https://*.firebaseapp.com https://www.recaptcha.net https://recaptcha.net https://www.google.com https://www.gstatic.com wss://*.firebaseio.com data: blob:; object-src 'none'; base-uri 'self'; form-action 'none';">
-  <!-- CBMRS — Conferência de Material 2026 · v2026.8.7 — login volta à foto anterior; voltar fecha modal antes de sair da tela · v2026.8.6 — fotos recortadas no vão da cortina, botão Início, voltar do Android e Recomeçar · v2026.8.5 — mapa: abas Teto e Cabine com foto · v2026.8.4 — ABT 660: foto na seção, mapa da viatura e cortina que abre · v2026.8.3 — fachada do quartel no login e garagem na home · v2026.8.2 — ocultar viatura pelo painel admin (viatura fora do quartel) -and-drop) + login funcional com responsável selecionável -->
+  <!-- CBMRS — Conferência de Material 2026 · v2026.8.8 — assinatura Bomrillaz, botões do topo maiores, tela acesa e vibração · v2026.8.7 — login volta à foto anterior; voltar fecha modal antes de sair da tela · v2026.8.6 — fotos recortadas no vão da cortina, botão Início, voltar do Android e Recomeçar · v2026.8.5 — mapa: abas Teto e Cabine com foto · v2026.8.4 — ABT 660: foto na seção, mapa da viatura e cortina que abre · v2026.8.3 — fachada do quartel no login e garagem na home · v2026.8.2 — ocultar viatura pelo painel admin (viatura fora do quartel) -and-drop) + login funcional com responsável selecionável -->
   <title>CBMRS — Conferência de Material | 1ª CiaBM · 4º PelBM</title>
   <meta name="theme-color" content="#D32412">
+  <meta property="og:site_name" content="Conferência de Material · Bomrillaz">
+  <meta name="author" content="Bomrillaz">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
   <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
@@ -70,6 +72,11 @@
     .auth-bg{position:absolute;inset:0;background:linear-gradient(180deg,rgba(11,20,48,.35) 0%,rgba(11,20,48,.75) 45%,rgba(8,13,32,.95) 100%)}
     .auth-content{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:20px;text-align:center}
     .auth-logo{width:auto;height:72px;object-fit:contain;margin-bottom:6px}
+    /* assinatura Bomrillaz (quem fez o app): discreta, nunca compete com o brasão */
+    .bz-sig{display:flex;align-items:center;justify-content:center;gap:6px;margin:18px auto 4px;font-family:var(--font-display);font-weight:600;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--text3)}
+    .bz-sig img{width:18px;height:18px;object-fit:contain}
+    .bz-sig.claro{color:rgba(255,255,255,.6)}
+    .bz-sobre{text-align:center;font-size:11px;line-height:1.5;color:var(--text3);margin:0 auto 8px;max-width:320px}
     /* ── Hero ── */
     .hero{background:linear-gradient(160deg,var(--red-mid) 0%,var(--red) 45%,var(--red-dark) 100%);padding:20px 16px 18px;text-align:center;position:relative;overflow:hidden;box-shadow:0 6px 24px rgba(var(--red-solid-rgb),.35)}
     .hero::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(-55deg,transparent,transparent 10px,rgba(0,0,0,.06) 10px,rgba(0,0,0,.06) 12px)}
@@ -129,7 +136,7 @@
     .cort-lat{position:absolute;left:0;transform-origin:0 0;will-change:transform}
     .cort-lat img,.cort-fech{display:block;width:100%;height:100%;object-fit:cover}
     .cort-fech{position:absolute;inset:0;opacity:0;will-change:transform,opacity}
-    .btn-mapa{margin-top:4px;background:rgba(255,255,255,0.2);color:white;border:1px solid rgba(255,255,255,0.4);border-radius:6px;padding:3px 10px;cursor:pointer;font-size:14px;font-family:var(--font-display);font-weight:700}
+    .btn-mapa{margin-top:4px;background:rgba(255,255,255,0.2);color:white;border:1px solid rgba(255,255,255,0.4);border-radius:6px;padding:6px 12px;min-height:40px;min-width:44px;cursor:pointer;font-size:15px;font-family:var(--font-display);font-weight:700;display:inline-flex;align-items:center;gap:4px}
     .sticky-hdr{position:sticky;top:0;z-index:10;padding:10px 14px;box-shadow:0 4px 20px rgba(16,27,61,.25);color:#fff}
     .prog-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:3px}
     .prog-lbl{font-size:13px;color:rgba(255,255,255,.65);letter-spacing:.5px;text-transform:uppercase}
@@ -310,6 +317,7 @@ function renderAuth(){
     root.innerHTML=`<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:16px">
       <div style="width:48px;height:48px;border:3px solid var(--red);border-top-color:transparent;border-radius:50%;animation:spin 0.8s linear infinite"></div>
       <div style="color:var(--text3);font-size:14px;font-family:inherit">Verificando acesso...</div>
+      <div class="bz-sig" style="margin-top:28px"><img src="assets/cesar-coin.png" alt="" style="width:28px;height:28px" onerror="this.remove()"><span>Bomrillaz</span></div>
     </div>`;
     return;
   }
@@ -328,6 +336,7 @@ function renderAuth(){
           ${icn('mail')} ${esc(currentUser?.email||'')}
         </div>
         <button onclick="doLogout()" class="btn-gray">Sair</button>
+        ${bzSig(true)}
       </div>
       </div>
     </div>`;
@@ -354,6 +363,7 @@ function renderAuth(){
           <div style="text-align:center;margin-top:12px;font-size:12px;color:var(--text3)">Após o cadastro, aguarde a aprovação do administrador.</div>
         </div>
         <button onclick="showLogin()" class="btn-gray">${icn('arrowLeft')} Voltar para Login</button>
+        ${bzSig(true)}
       </div>
       </div>
     </div>`;
@@ -379,6 +389,7 @@ function renderAuth(){
         <button onclick="signInEmail()" class="btn-red" ${authLoading?'disabled':''}>${authLoading?'Entrando...':'ENTRAR'}</button>
       </div>
       <button onclick="showRegister()" class="btn-gray">${icn('clipboard')} Criar novo acesso</button>
+      ${bzSig(true)}
     </div>
     </div>
   </div>`;
@@ -1266,6 +1277,8 @@ function _cleanCustomSC(data){
 // ════════════════════════════════════
 //  ÍCONES — SVG inline (substitui emoji de UI; sec.icon do checklist continua emoji livre)
 // ════════════════════════════════════
+const APP_VER='2026.8.8';
+const bzSig=(claro)=>`<div class="bz-sig${claro?' claro':''}"><img src="assets/cesar-coin.png" alt="" onerror="this.remove()"><span>por Bomrillaz</span></div>`;
 const ICONS={
   home:'<path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/>',
   check:'<polyline points="20 6 9 17 4 12"/>',
@@ -1958,8 +1971,18 @@ window.addEventListener('popstate',()=>{
   const lb=document.querySelector('.lightbox');if(lb){lb.click();if(TELAS_INTERNAS.includes(screen))history.pushState({cbm:'in'},'');return;}
   if(authState==='app'&&TELAS_INTERNAS.includes(screen))setState({screen:'home'});
 });
+// Tela acesa durante a conferência (Wake Lock; sem suporte = nada acontece). O sistema solta ao minimizar: re-pede ao voltar.
+let _wake=null;
+function syncTelaAcesa(){
+  const quer=authState==='app'&&(screen==='checklist'||screen==='mapa')&&document.visibilityState==='visible';
+  try{
+    if(quer&&!_wake&&navigator.wakeLock)navigator.wakeLock.request('screen').then(w=>{_wake=w;w.addEventListener('release',()=>{_wake=null;});}).catch(()=>{});
+    else if(!quer&&_wake){_wake.release().catch(()=>{});_wake=null;}
+  }catch(_){}
+}
+document.addEventListener('visibilitychange',syncTelaAcesa);
 function render(){
-  syncVoltar();
+  syncVoltar();syncTelaAcesa();
   if(authState!=='app'){renderAuth();return;}
   if(screen==='selectResp'){renderSelectResp();return;}
   const prog=getProg(),root=document.getElementById('root');
@@ -2019,6 +2042,8 @@ ${!identOk()?`<div style="background:var(--amber-light);border:1px solid var(--a
 <button id="btn-hist-nav" class="btn-gray" style="margin-top:8px;border-color:var(--border)">
   ${icn('clipboard')} HISTÓRICO ${history_cbm.length>0?'('+history_cbm.length+' registros)':''}
 </button>
+${bzSig(false)}
+<p class="bz-sobre">Feito por Bomrillaz para a 1ª CiaBM/4º PelBM. Ferramenta interna, não é sistema oficial do CBMRS. · v${APP_VER}</p>
 </div></div>`;
     document.getElementById('btn-hist-nav').addEventListener('click', function(){ setState({screen:'history'}); });
     garageKeepImg();
@@ -2278,6 +2303,7 @@ function patchProgress(){
 
 // FIX: setStatus usa patch cirúrgico — sem piscada, sem scroll-jump
 window.setStatus=(id,st)=>{
+  try{navigator.vibrate&&navigator.vibrate(st==='nc'?[20,40,20]:15);}catch(_){} // confirmação tátil (Android; iPhone ignora)
   if(!responses[id])responses[id]={};
   responses[id].status=st;
   if(st==='ok')delete responses[id].obs;
