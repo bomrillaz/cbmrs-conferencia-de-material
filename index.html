@@ -789,7 +789,9 @@ window.adminSaveChecklist=async()=>{
     // antigo em cache não cair silenciosamente no checklist de fábrica (plano §2.4).
     const payload=editingSC.map(sec=>({
       id:sec.id,vid:sec.vid,title:sec.title,icon:sec.icon||'',
-      rows:sec.rows,
+      // JSON round-trip: linha sem subitem tem `subs:undefined` (toEditableSC) e o RTDB recusa
+      // `set()` com undefined em qualquer propriedade (b14: o salvar falhava sempre).
+      rows:JSON.parse(JSON.stringify(sec.rows)),
       items:sec.rows.filter(r=>r.t==='i').map(r=>[r.name,r.qty||'—'])
     }));
     await fbDb.ref('checklist_custom').set(payload);
