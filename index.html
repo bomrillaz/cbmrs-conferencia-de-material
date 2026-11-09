@@ -112,20 +112,17 @@
     .mapa-tabs{display:flex;gap:6px;padding:10px 14px 0}
     .mapa-tab{flex:1;padding:9px 4px;border-radius:var(--radius-xs);border:1px solid var(--border);background:var(--surface);color:var(--text2);font-family:var(--font-display);font-weight:700;font-size:16px;letter-spacing:.5px;text-transform:uppercase;cursor:pointer}
     .mapa-tab.on{background:var(--navy);color:var(--white);border-color:var(--navy)}
-    .mapa-wrap{position:relative;margin:12px 14px 0;border-radius:var(--radius-sm);overflow:hidden;line-height:0}
+    .mapa-wrap{position:relative;margin:10px 0 0;overflow:hidden;line-height:0;background:var(--navy-deep)}
     .mapa-wrap img{width:100%;display:block}
-    .mapa-area{position:absolute;border:2px solid var(--white);border-radius:6px;cursor:pointer;padding:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--white);font-family:var(--font-display);font-weight:800;line-height:1.1;text-shadow:0 1px 2px var(--navy-deep);transition:background var(--dur-fast)}
-    .mapa-area b{font-size:clamp(11px,3.4vw,18px)}
-    .mapa-area small{font-size:clamp(9px,2.6vw,13px);font-weight:700}
-    .mapa-area.s0{background:color-mix(in srgb,var(--text3) 55%,transparent)}
-    .mapa-area.s1{background:color-mix(in srgb,var(--amber) 62%,transparent)}
-    .mapa-area.s2{background:color-mix(in srgb,var(--green) 62%,transparent)}
-    .mapa-area.nc,.mapa-card.nc{border-color:var(--red);box-shadow:0 0 0 2px var(--red)}
+    .mapa-area{--c:var(--text3);position:absolute;border:3px solid var(--c);border-radius:6px;cursor:pointer;padding:0;background:color-mix(in srgb,var(--c) 14%,transparent);box-shadow:0 0 0 1px var(--white)}
+    .mapa-area.s1{--c:var(--amber)}.mapa-area.s2{--c:var(--green)}
+    .mapa-area b{position:absolute;left:50%;top:0;transform:translateX(-50%);background:var(--c);color:var(--white);font-family:var(--font-display);font-weight:800;font-size:clamp(10px,2.9vw,14px);line-height:1.15;padding:1px 5px;border-radius:0 0 6px 6px;white-space:nowrap}
+    .mapa-area.nc,.mapa-card.nc{border-color:var(--red);box-shadow:0 0 0 1px var(--white),0 0 0 3px var(--red)}
     .mapa-cards{display:grid;gap:8px;padding:12px 14px 0}
     .mapa-card{display:flex;align-items:center;gap:10px;text-align:left;width:100%;padding:12px;border-radius:var(--radius-sm);border:2px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;font-size:16px;font-weight:600}
     .mapa-card i{flex:0 0 14px;height:14px;border-radius:50%;background:var(--text3)}
     .mapa-card.s1 i{background:var(--amber)}.mapa-card.s2 i{background:var(--green)}
-    .mapa-card em{margin-left:auto;font-style:normal;font-size:14px;color:var(--text2)}
+    .mapa-card em{margin-left:auto;white-space:nowrap;font-style:normal;font-size:14px;color:var(--text2)}
     .mapa-leg{padding:10px 14px 0;font-size:13px;color:var(--text2)}
     .cort-ov{position:absolute;inset:0;overflow:hidden;z-index:2;cursor:pointer}
     .cort-bg{position:absolute;inset:0;background:var(--navy-deep)}
@@ -1375,10 +1372,10 @@ const FOTOS_SEC={
 const fotosDe=sec=>sec.vid==='abt660'?(FOTOS_SEC[sec.id]||[]):[];
 // Áreas em % da imagem: [sec.id, rótulo, x, y, largura, altura]
 const MAPA_ABT660={
-  mot:{img:'img/viaturas/abt660-motorista.webp',alt:'ABT 660, lado do motorista',areas:[
-    ['b60_c1','C01',37.0,39.2,8.9,22.0],['b60_c2','C02',46.7,38.6,13.1,35.0],['b60_c3','C03',60.5,38.3,15.6,21.9],['b60_c4','C04',77.0,37.8,9.2,32.2]]},
-  car:{img:'img/viaturas/abt660-carona.webp',alt:'ABT 660, lado da carona',areas:[
-    ['b60_c8','C08',35.5,31.7,9.1,26.4],['b60_c7','C07',23.3,31.7,11.6,40.6],['b60_c6','C06',10.7,31.9,12.1,23.3],['b60_c5','C05',4.1,31.9,6.3,32.2]],
+  mot:{ar:750/410,img:'img/viaturas/abt660-motorista.webp',alt:'ABT 660, lado do motorista',areas:[
+    ['b60_c1','C01',10.7,22.4,14.7,38.5],['b60_c2','C02',27.3,22.0,21.6,61.0],['b60_c3','C03',50.7,21.2,26.3,37.8],['b60_c4','C04',79.1,20.0,14.7,56.8]]},
+  car:{ar:600/400,img:'img/viaturas/abt660-carona.webp',alt:'ABT 660, lado da carona',areas:[
+    ['b60_c8','C08',76.5,21.3,16.0,47.0],['b60_c7','C07',51.3,21.8,23.5,74.5],['b60_c6','C06',21.7,23.3,28.0,46.8],['b60_c5','C05',3.8,24.5,16.0,67.5]],
     extra:['b60_cb','b60_ms']},
   teto:{cards:['b60_ps']},
   cab:{cards:['b60_cab']}
@@ -1402,11 +1399,12 @@ function renderMapaHtml(){
   if(m.img){
     body+=`<div class="mapa-wrap"><img src="${m.img}" alt="${esc(m.alt)}">${m.areas.map(([sid,lb,x,y,w,h])=>{
       const e=secEstado(sid);if(!e)return'';
-      return`<button class="mapa-area s${e.st}${e.nc?' nc':''}" style="left:${x}%;top:${y}%;width:${w}%;height:${h}%" onclick="mapaSec('${sid}')" aria-label="${esc(e.s.title)}: ${e.p.done} de ${e.p.total}${e.nc?', com não conformidade':''}"><b>${lb}</b><small>${e.p.done}/${e.p.total}</small></button>`;
+      return`<button class="mapa-area s${e.st}${e.nc?' nc':''}" style="left:${x}%;top:${y}%;width:${w}%;height:${h}%" onclick="mapaSec('${sid}')" aria-label="${esc(e.s.title)}: ${e.p.done} de ${e.p.total}${e.nc?', com não conformidade':''}"><b>${lb} ${e.p.done}/${e.p.total}</b></button>`;
     }).join('')}</div>`;
   }
-  const cards=[...(m.extra||[]),...(m.cards||[])];
-  if(cards.length)body+=`<div class="mapa-cards">${m.extra?'<div class="mapa-leg" style="padding:0">Ficam na Cortina 08:</div>':''}${cards.map(mapaCard).join('')}</div>`;
+  const ordem=m.areas?(mapaTab==='car'?[...m.areas].reverse():m.areas).map(a=>a[0]):[];
+  const cards=[...ordem,...(m.extra||[]),...(m.cards||[])];
+  if(cards.length)body+=`<div class="mapa-cards">${cards.map(sid=>(m.extra&&sid===m.extra[0]?'<div class="mapa-leg" style="padding:2px 0 0">Ficam na Cortina 08:</div>':'')+mapaCard(sid)).join('')}</div>`;
   body+=`<div class="mapa-leg">Verde: tudo respondido · Amarelo: em andamento · Cinza: nada ainda · Borda vermelha: tem N/C</div>`;
   return`<div class="sticky-hdr" style="background:var(--navy)"><div style="display:flex;justify-content:space-between;align-items:center"><div style="font-size:20px;font-weight:900;letter-spacing:1px;text-transform:uppercase" class="ff">ABT 660 — Mapa</div><div style="font-size:18px;font-weight:900" class="ff">${prog.pct}%</div></div><div class="prog-bg" style="margin-top:6px"><div class="prog-fill" style="width:${prog.pct}%"></div></div></div><div class="mapa-tabs">${tabs}</div>${body}`;
 }
@@ -1423,7 +1421,7 @@ window.fotoAmplia=src=>{
 // ── Cortina que abre (só troca de SEÇÃO, só transform/opacity; toque pula; reduced-motion = corte direto) ──
 let lastSecId=null;
 function cortinaInfo(sid){
-  for(const k of ['mot','car']){const m=MAPA_ABT660[k],a=m.areas.find(x=>x[0]===sid);if(a)return{k,img:m.img,a};}
+  for(const k of ['mot','car']){const m=MAPA_ABT660[k],a=m.areas.find(x=>x[0]===sid);if(a)return{k,img:m.img,a,ar:m.ar};}
   return null;
 }
 const cortFechada=sid=>`img/secoes/abt660/${FOTOS_SEC[sid][0]}f.webp`;
@@ -1431,8 +1429,8 @@ function precarrega(sid){
   const i=cortinaInfo(sid);if(!i||!FOTOS_SEC[sid])return;
   [i.img,cortFechada(sid),`img/secoes/abt660/${FOTOS_SEC[sid][0]}.webp`].forEach(u=>{const im=new Image();im.src=u;});
 }
-function cortZoom(W,H,a){ // transform que leva a área (em % da lateral 16:9) ao centro do quadro
-  const iw=W,ih=W*9/16,top=(H-ih)/2,[,,x,y,w,h]=a;
+function cortZoom(W,H,a,ar){ // transform que leva a área (em % da lateral 16:9) ao centro do quadro
+  const iw=W,ih=W/ar,top=(H-ih)/2,[,,x,y,w,h]=a;
   const cx=(x+w/2)/100*iw,cy=(y+h/2)/100*ih;
   const sc=Math.min(8,.92*Math.min(W/(w/100*iw),H/(h/100*ih)));
   return`translate(${W/2-cx*sc}px,${H/2-cy*sc-top}px) scale(${sc})`;
@@ -1444,13 +1442,13 @@ function animaCortina(sec,prevSid){
   const W=btn.clientWidth,H=btn.clientHeight;if(!W||!H)return;
   const pi=prevSid?cortinaInfo(prevSid):null,same=!!pi&&pi.k===info.k;
   const ov=document.createElement('div');ov.className='cort-ov';ov.setAttribute('aria-hidden','true');
-  ov.innerHTML=`<div class="cort-bg"></div><div class="cort-lat" style="width:${W}px;height:${W*9/16}px;top:${(H-W*9/16)/2}px"><img src="${info.img}" alt=""></div><img class="cort-fech" src="${cortFechada(sec.id)}" alt="">`;
+  ov.innerHTML=`<div class="cort-bg"></div><div class="cort-lat" style="width:${W}px;height:${W/info.ar}px;top:${(H-W/info.ar)/2}px"><img src="${info.img}" alt=""></div><img class="cort-fech" src="${cortFechada(sec.id)}" alt="">`;
   btn.appendChild(ov);
-  const bg=ov.firstChild,lat=ov.children[1],fech=ov.lastChild,id='translate(0px,0px) scale(1)',fim=cortZoom(W,H,info.a);
+  const bg=ov.firstChild,lat=ov.children[1],fech=ov.lastChild,id='translate(0px,0px) scale(1)',fim=cortZoom(W,H,info.a,info.ar);
   let kf,T;
   if(same){
     const a=pi.a,b=info.a,mid=['','',(a[2]+a[4]/2+b[2]+b[4]/2)/2-6,(a[3]+a[5]/2+b[3]+b[5]/2)/2-6,12,12];
-    kf=[{transform:cortZoom(W,H,a)},{transform:cortZoom(W,H,mid),offset:.5},{transform:fim}];T=620;
+    kf=[{transform:cortZoom(W,H,a,info.ar)},{transform:cortZoom(W,H,mid,info.ar),offset:.5},{transform:fim}];T=620;
   }else{kf=[{transform:id},{transform:fim}];T=480;}
   const ez='cubic-bezier(.16,1,.3,1)',as=[];
   as.push(lat.animate(kf,{duration:T,easing:ez,fill:'forwards'}));
