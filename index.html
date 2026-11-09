@@ -2344,7 +2344,7 @@ function executarFinalizacao(){
   const voltaSelectResp=sessionResp?.viaFuncional===true;
   // Reset completo do estado
   responses={};secIdx=0;selVids=VH.map(v=>v.id);
-  screen='home'; // a tela "Bom Serviço" é só innerHTML: com screen interna, o voltar nesses 3 s pulava de tela
+  screen='home'; // a tela "Bom Serviço" não muda screen: com screen interna, o voltar nesses 3 s pulava de tela
   limpaMarcaConf();_parteGerada=false;
   try{localStorage.removeItem(LS.R);localStorage.removeItem(LS.V);}catch(_){}
   if(voltaSelectResp){sessionResp=null;ident={name:'',guerra:'',rank:'',re:''};persistSessionResp();}
