@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Sistema de conferência de material do Corpo de Bombeiros Militar — 1ª CiaBM / 4º PelBM — São Marcos RS">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' https://*.googleapis.com https://*.gstatic.com https://*.firebase.com https://*.firebaseio.com https://*.firebaseapp.com https://www.recaptcha.net https://recaptcha.net https://www.google.com https://www.gstatic.com wss://*.firebaseio.com data: blob:; object-src 'none'; base-uri 'self'; form-action 'none';">
-  <!-- CBMRS — Conferência de Material 2026 · v2026.8.9 — mapa: aba Cabine primeiro e sem foto · v2026.8.8 — assinatura Bomrillaz, botões do topo maiores, tela acesa e vibração · v2026.8.7 — login volta à foto anterior; voltar fecha modal antes de sair da tela · v2026.8.6 — fotos recortadas no vão da cortina, botão Início, voltar do Android e Recomeçar · v2026.8.5 — mapa: abas Teto e Cabine com foto · v2026.8.4 — ABT 660: foto na seção, mapa da viatura e cortina que abre · v2026.8.3 — fachada do quartel no login e garagem na home · v2026.8.2 — ocultar viatura pelo painel admin (viatura fora do quartel) -and-drop) + login funcional com responsável selecionável -->
+  <!-- CBMRS — Conferência de Material 2026 · v2026.8.10 — mapa: laterais inteiras com a cabine tocável · v2026.8.9 — mapa: aba Cabine primeiro e sem foto · v2026.8.8 — assinatura Bomrillaz, botões do topo maiores, tela acesa e vibração · v2026.8.7 — login volta à foto anterior; voltar fecha modal antes de sair da tela · v2026.8.6 — fotos recortadas no vão da cortina, botão Início, voltar do Android e Recomeçar · v2026.8.5 — mapa: abas Teto e Cabine com foto · v2026.8.4 — ABT 660: foto na seção, mapa da viatura e cortina que abre · v2026.8.3 — fachada do quartel no login e garagem na home · v2026.8.2 — ocultar viatura pelo painel admin (viatura fora do quartel) -and-drop) + login funcional com responsável selecionável -->
   <title>CBMRS — Conferência de Material | 1ª CiaBM · 4º PelBM</title>
   <meta name="theme-color" content="#D32412">
   <meta property="og:site_name" content="Conferência de Material · Bomrillaz">
@@ -1278,7 +1278,7 @@ function _cleanCustomSC(data){
 // ════════════════════════════════════
 //  ÍCONES — SVG inline (substitui emoji de UI; sec.icon do checklist continua emoji livre)
 // ════════════════════════════════════
-const APP_VER='2026.8.9';
+const APP_VER='2026.8.10';
 const bzSig=(claro)=>`<div class="bz-sig${claro?' claro':''}"><img src="assets/cesar-coin.png" alt="" onerror="this.remove()"><span>por Bomrillaz</span></div>`;
 const ICONS={
   home:'<path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/>',
@@ -1389,17 +1389,17 @@ const FOTO_DIM={c1:[662,960],c2:[641,986],c3:[662,499],c4:[540,998],c5:[597,1152
 const fotosDe=sec=>sec.vid==='abt660'?(FOTOS_SEC[sec.id]||[]):[];
 // Áreas em % da imagem: [sec.id, rótulo, x, y, largura, altura]
 const MAPA_ABT660={
-  mot:{ar:703/417,img:'img/viaturas/abt660-motorista.webp',alt:'ABT 660, lado do motorista',areas:[
-    ['b60_c1','C01',5.7,22.1,15.6,37.9],['b60_c2','C02',23.5,21.6,23.0,59.9],['b60_c3','C03',48.4,20.9,28.0,37.2],['b60_c4','C04',78.7,19.7,15.6,55.9]]},
-  car:{ar:703/417,img:'img/viaturas/abt660-carona.webp',alt:'ABT 660, lado da carona',areas:[
-    ['b60_c8','C08',78.9,21.3,15.5,37.3],['b60_c7','C07',54.5,20.9,22.5,58.2],['b60_c6','C06',24.3,20.2,28.3,37.3],['b60_c5','C05',5.7,19.8,16.9,54.4]],
+  // laterais inteiras (com cabine, b15): a cabine é área tocável que leva à seção Cabine
+  mot:{ar:1100/460,img:'img/viaturas/abt660-motorista.webp',alt:'ABT 660, lado do motorista',areas:[
+    ['b60_cab','CAB',3.9,14.4,29.8,59.4],['b60_c1','C01',40.1,19.6,11.3,36.4],['b60_c2','C02',52.0,19.6,15.0,55.7],['b60_c3','C03',67.2,19.6,17.3,36.4],['b60_c4','C04',85.0,19.6,10.8,49.8]]},
+  car:{ar:1100/483,img:'img/viaturas/abt660-carona.webp',alt:'ABT 660, lado da carona',areas:[
+    ['b60_c8','C08',50.1,17.3,10.6,32.0],['b60_c7','C07',33.9,17.3,16.0,61.1],['b60_c6','C06',14.1,17.3,19.5,32.0],['b60_c5','C05',2.4,17.3,11.6,60.4],['b60_cab','CAB',70.3,16.6,26.6,56.9]],
     extra:['b60_cb','b60_ms']},
-  teto:{foto:'img/viaturas/abt660-teto.webp',alt:'ABT 660, vista de cima do teto',sid:'b60_ps',lb:'TETO',cards:['b60_ps']},
-  cab:{cards:['b60_cab']} // sem foto: a foto de dentro da cabine não ficou boa (decisão do João, b15)
+  teto:{foto:'img/viaturas/abt660-teto.webp',alt:'ABT 660, vista de cima do teto',sid:'b60_ps',lb:'TETO',cards:['b60_ps']}
 };
-// a conferência começa pela Cabine (1ª seção da ABT 660): ela abre o mapa e é a 1ª aba
-const MAPA_ABAS=[['cab','Cabine'],['mot','Motorista'],['car','Carona'],['teto','Teto']];
-let mapaTab='cab';
+// a conferência começa pela Cabine: ela é a 1ª área da lateral do motorista (aba que abre por padrão)
+const MAPA_ABAS=[['mot','Motorista'],['car','Carona'],['teto','Teto']];
+let mapaTab='mot';
 const hasMapa=()=>getAct().some(s=>s.vid==='abt660');
 function secEstado(sid){
   const s=getAct().find(x=>x.id===sid);if(!s)return null;
@@ -1458,7 +1458,7 @@ function cortZoom(W,H,a,ar){ // transform que leva a área (em % da lateral 16:9
   return`translate(${W/2-cx*sc}px,${H/2-cy*sc-top}px) scale(${sc})`;
 }
 function animaCortina(sec,prevSid){
-  const info=cortinaInfo(sec.id);
+  const info=FOTOS_SEC[sec.id]?cortinaInfo(sec.id):null;
   if(!info||(window.matchMedia&&matchMedia('(prefers-reduced-motion:reduce)').matches))return;
   const btn=document.querySelector('.sec-fotos .sec-foto');if(!btn||!btn.animate)return;
   const W=btn.clientWidth,H=btn.clientHeight;if(!W||!H)return;
