@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Sistema de conferência de material do Corpo de Bombeiros Militar — 1ª CiaBM / 4º PelBM — São Marcos RS">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' https://*.googleapis.com https://*.gstatic.com https://*.firebase.com https://*.firebaseio.com https://*.firebaseapp.com https://www.recaptcha.net https://recaptcha.net https://www.google.com https://www.gstatic.com wss://*.firebaseio.com data: blob:; object-src 'none'; base-uri 'self'; form-action 'none';">
-  <!-- CBMRS — Conferência de Material 2026 · v2026.8.8 — assinatura Bomrillaz, botões do topo maiores, tela acesa e vibração · v2026.8.7 — login volta à foto anterior; voltar fecha modal antes de sair da tela · v2026.8.6 — fotos recortadas no vão da cortina, botão Início, voltar do Android e Recomeçar · v2026.8.5 — mapa: abas Teto e Cabine com foto · v2026.8.4 — ABT 660: foto na seção, mapa da viatura e cortina que abre · v2026.8.3 — fachada do quartel no login e garagem na home · v2026.8.2 — ocultar viatura pelo painel admin (viatura fora do quartel) -and-drop) + login funcional com responsável selecionável -->
+  <!-- CBMRS — Conferência de Material 2026 · v2026.8.9 — mapa: aba Cabine primeiro e sem foto · v2026.8.8 — assinatura Bomrillaz, botões do topo maiores, tela acesa e vibração · v2026.8.7 — login volta à foto anterior; voltar fecha modal antes de sair da tela · v2026.8.6 — fotos recortadas no vão da cortina, botão Início, voltar do Android e Recomeçar · v2026.8.5 — mapa: abas Teto e Cabine com foto · v2026.8.4 — ABT 660: foto na seção, mapa da viatura e cortina que abre · v2026.8.3 — fachada do quartel no login e garagem na home · v2026.8.2 — ocultar viatura pelo painel admin (viatura fora do quartel) -and-drop) + login funcional com responsável selecionável -->
   <title>CBMRS — Conferência de Material | 1ª CiaBM · 4º PelBM</title>
   <meta name="theme-color" content="#D32412">
   <meta property="og:site_name" content="Conferência de Material · Bomrillaz">
@@ -112,7 +112,8 @@
     /* foto recortada no vão da cortina: aparece inteira (sem cover), moldura do tamanho da foto */
     .sec-foto{flex:0 0 auto;max-width:100%;scroll-snap-align:start;position:relative;border:0;padding:0;background:var(--paper-2);border-radius:var(--radius-sm);overflow:hidden;cursor:zoom-in;box-shadow:var(--shadow-sm,0 1px 3px rgba(0,0,0,.18))}
     .sec-fotos.multi .sec-foto{max-width:84%}
-    .sec-foto img{display:block;width:auto;height:auto;max-width:100%;max-height:min(56vh,420px)}
+    /* tamanho da moldura vem de FOTO_DIM (style inline) e não da imagem carregada: a cortina anima mesmo antes da foto chegar */
+    .sec-foto img{display:block;width:100%;height:auto}
     .sec-foto span{position:absolute;right:8px;bottom:8px;background:var(--navy-deep);color:var(--white);font-size:12px;padding:2px 8px;border-radius:99px;opacity:.85}
     .lightbox{position:fixed;inset:0;z-index:var(--z-modal);background:var(--navy-deep);display:flex;align-items:center;justify-content:center;cursor:zoom-out}
     .lightbox img{max-width:100%;max-height:100%;object-fit:contain}
@@ -1277,7 +1278,7 @@ function _cleanCustomSC(data){
 // ════════════════════════════════════
 //  ÍCONES — SVG inline (substitui emoji de UI; sec.icon do checklist continua emoji livre)
 // ════════════════════════════════════
-const APP_VER='2026.8.8';
+const APP_VER='2026.8.9';
 const bzSig=(claro)=>`<div class="bz-sig${claro?' claro':''}"><img src="assets/cesar-coin.png" alt="" onerror="this.remove()"><span>por Bomrillaz</span></div>`;
 const ICONS={
   home:'<path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/>',
@@ -1394,10 +1395,11 @@ const MAPA_ABT660={
     ['b60_c8','C08',78.9,21.3,15.5,37.3],['b60_c7','C07',54.5,20.9,22.5,58.2],['b60_c6','C06',24.3,20.2,28.3,37.3],['b60_c5','C05',5.7,19.8,16.9,54.4]],
     extra:['b60_cb','b60_ms']},
   teto:{foto:'img/viaturas/abt660-teto.webp',alt:'ABT 660, vista de cima do teto',sid:'b60_ps',lb:'TETO',cards:['b60_ps']},
-  cab:{foto:'img/viaturas/abt660-cabine.webp',alt:'ABT 660, interior da cabine',sid:'b60_cab',lb:'CABINE',cards:['b60_cab']}
+  cab:{cards:['b60_cab']} // sem foto: a foto de dentro da cabine não ficou boa (decisão do João, b15)
 };
-const MAPA_ABAS=[['mot','Motorista'],['car','Carona'],['teto','Teto'],['cab','Cabine']];
-let mapaTab='mot';
+// a conferência começa pela Cabine (1ª seção da ABT 660): ela abre o mapa e é a 1ª aba
+const MAPA_ABAS=[['cab','Cabine'],['mot','Motorista'],['car','Carona'],['teto','Teto']];
+let mapaTab='cab';
 const hasMapa=()=>getAct().some(s=>s.vid==='abt660');
 function secEstado(sid){
   const s=getAct().find(x=>x.id===sid);if(!s)return null;
@@ -1483,7 +1485,9 @@ function animaCortina(sec,prevSid){
 }
 function fotosHtml(sec){
   const f=fotosDe(sec);if(!f.length)return'';
-  return`<div class="sec-fotos${f.length>1?' multi':''}">${f.map((k,i)=>`<button class="sec-foto" onclick="fotoAmplia('img/secoes/abt660/${k}.webp')" aria-label="Ampliar foto ${i+1} de ${f.length} da seção"><img src="img/secoes/abt660/${k}.webp" loading="lazy"${FOTO_DIM[k]?` width="${FOTO_DIM[k][0]}" height="${FOTO_DIM[k][1]}"`:''} alt="Foto do compartimento ${f.length>1?(i+1)+'/'+f.length:''}"><span>${f.length>1?(i+1)+'/'+f.length+' · ':''}toque p/ ampliar</span></button>`).join('')}</div>`;
+  const tam=k=>{const d=FOTO_DIM[k];if(!d)return'';const ar=(d[0]/d[1]).toFixed(4);return` style="width:min(${f.length>1?84:100}%,calc(min(56vh,420px)*${ar}))"`;};
+  const ar=k=>FOTO_DIM[k]?` style="aspect-ratio:${FOTO_DIM[k][0]}/${FOTO_DIM[k][1]}"`:'';
+  return`<div class="sec-fotos${f.length>1?' multi':''}">${f.map((k,i)=>`<button class="sec-foto"${tam(k)} onclick="fotoAmplia('img/secoes/abt660/${k}.webp')" aria-label="Ampliar foto ${i+1} de ${f.length} da seção"><img src="img/secoes/abt660/${k}.webp" loading="lazy"${ar(k)} alt="Foto do compartimento ${f.length>1?(i+1)+'/'+f.length:''}"><span>${f.length>1?(i+1)+'/'+f.length+' · ':''}toque p/ ampliar</span></button>`).join('')}</div>`;
 }
 function getNCs(){const ncs=[];getAct().forEach(s=>secChecks(s).forEach(r=>{const rr=responses[rowKey(s,r)];if(rr?.status==='nc'){const v=VH.find(v=>v.id===s.vid);ncs.push({veh:v.name,sec:s.title,name:r.name,qty:r.qty,obs:rr.obs||''});}}));return ncs;}
 
