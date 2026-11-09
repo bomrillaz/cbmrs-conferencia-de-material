@@ -47,11 +47,21 @@ Trabalho em português.
   ignora mesmo se estiver no `selVids` do celular); checklist intacto. Para viatura emprestada/baixada,
   nunca tirar do array `VH`.
 - **Garagem, fotos e mapa (b14, v2026.8.4/8.5)**: home com a fachada do quartel (`img/quartel/`) e as viaturas
-  tocáveis (toque nunca apaga conferência em andamento); login com a fachada vertical. ABT 660: foto no topo
-  de cada seção, mapa da viatura (abas Motorista/Carona/Teto/Cabine, cortinas tocáveis com selo de andamento)
-  e cortina que abre ao entrar na seção. Mapa seção→foto é constante no código por `sec.id` (não mexe em
-  `rows`/`items`); imagens em `img/secoes/{vid}/` e `img/viaturas/`, WebP, fora do pré-cache do SW. Originais
-  e notas em `materiais/marca/fotos/{vid}/` (gitignorado). Outras viaturas: sem mapa até replicar.
+  tocáveis (toque nunca apaga conferência em andamento). Login voltou ao `img/banner.jpg` na b15 (a fachada
+  vertical mostrava só céu). ABT 660: foto no topo de cada seção, mapa da viatura (abas Motorista/Carona/Teto;
+  laterais INTEIRAS com a cabine como área tocável "CAB" desde a b15, sem aba Cabine) e cortina que abre ao
+  entrar na seção. Mapa seção→foto é constante no código por `sec.id` (não mexe em `rows`/`items`); imagens em
+  `img/secoes/{vid}/` e `img/viaturas/`, WebP, fora do pré-cache do SW. Originais e notas em
+  `materiais/marca/fotos/{vid}/` (gitignorado). Outras viaturas: sem mapa até replicar.
+  **Fotos de seção (b15):** recortadas só no vão da cortina; a moldura tira o tamanho de `FOTO_DIM` (style
+  inline), nunca da imagem carregada — sem isso a cortina não anima no celular (foto chega depois da animação).
+  Trocou/recortou foto → atualizar `FOTO_DIM`.
+- **Navegação (b15, v2026.8.6+):** botão Início no checklist/mapa/resumo; voltar do Android (`syncVoltar` +
+  `popstate`, telas em `TELAS_INTERNAS`): fecha modal/lightbox primeiro, depois leva à home; na home fecha o app.
+  Home com CONTINUAR/RECOMEÇAR; `startNew` com conferência em andamento sempre pede confirmação (`showModal`).
+  Tela acesa (Wake Lock) no checklist/mapa e vibração ao marcar. `APP_VER` (perto de `ICONS`) = versão exibida.
+- **Assinatura Bomrillaz (b15):** `bzSig()` "por Bomrillaz" + César no pé do login/cadastro/pendente/home,
+  aviso "não é sistema oficial do CBMRS" na home. Word/relatório oficial ficam sem marca (decisão).
 - **Lista de fábrica vs banco**: item de fábrica (formato `items`) é chaveado pela POSIÇÃO; no código só
   correção de texto. Mudança de lista vai pelo painel (grava `rows` com id estável). A lista real está no
   banco (`checklist_custom`); comparar foto com lista exige ler o banco (login do João, IA só lê).
@@ -139,7 +149,7 @@ Trabalho em português.
   trivial. Sonnet é o padrão; Opus só na fase de decisão de mudança estrutural.
 - Verificação leve: `bash verify_conferencia.sh` (contagens de `esc()`/`innerHTML`, viaturas presentes,
   sintaxe balanceada). Rodar antes de qualquer commit que toque `index.html`.
-  Baseline 2026-11-09 (b14, v2026.8.5): `esc()=106` · `innerHTML=23` · `initializeApp=1` ·
+  Baseline 2026-11-09 (b14, v2026.8.5; igual na b15, v2026.8.10): `esc()=106` · `innerHTML=23` · `initializeApp=1` ·
   `ADMIN_EMAIL=4` · `unsafe-eval=0` · `checkRateLimit=2` · `patchItemStatus=2` · `patchProgress=2`.
   Divergência = investigar antes de seguir. (`ADMIN_EMAIL` 3→4 na b11: filtro do admin master no
   `loadEfetivo`; `esc()` 97→99 na b12: o rank fora da lista entra escapado no select de graduação.)
