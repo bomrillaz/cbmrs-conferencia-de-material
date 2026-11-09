@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Sistema de conferência de material do Corpo de Bombeiros Militar — 1ª CiaBM / 4º PelBM — São Marcos RS">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' https://*.googleapis.com https://*.gstatic.com https://*.firebase.com https://*.firebaseio.com https://*.firebaseapp.com https://www.recaptcha.net https://recaptcha.net https://www.google.com https://www.gstatic.com wss://*.firebaseio.com data: blob:; object-src 'none'; base-uri 'self'; form-action 'none';">
-  <!-- CBMRS — Conferência de Material 2026 · v2026.8.2 — ocultar viatura pelo painel admin (viatura fora do quartel) -and-drop) + login funcional com responsável selecionável -->
+  <!-- CBMRS — Conferência de Material 2026 · v2026.8.3 — fachada do quartel no login e garagem na home · v2026.8.2 — ocultar viatura pelo painel admin (viatura fora do quartel) -and-drop) + login funcional com responsável selecionável -->
   <title>CBMRS — Conferência de Material | 1ª CiaBM · 4º PelBM</title>
   <meta name="theme-color" content="#D32412">
   <link rel="manifest" href="manifest.webmanifest">
@@ -67,7 +67,9 @@
     /* ── Tela de login: banner de fundo + logo (padrão Bomrillaz) ── */
     .auth-wrap{position:relative;min-height:100vh;overflow:hidden}
     .auth-bg-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center top}
-    .auth-bg{position:absolute;inset:0;background:linear-gradient(180deg,rgba(11,20,48,.35) 0%,rgba(11,20,48,.75) 45%,rgba(8,13,32,.95) 100%)}
+    .auth-bg-img{transform-origin:50% 35%;animation:kenburns 20s ease-in-out infinite alternate;will-change:transform}
+    @keyframes kenburns{from{transform:scale(1)}to{transform:scale(1.14)}}
+    .auth-bg{position:absolute;inset:0;background:linear-gradient(180deg,rgba(11,20,48,.08) 0%,rgba(11,20,48,.30) 45%,rgba(8,13,32,.88) 100%)}
     .auth-content{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:20px;text-align:center}
     .auth-logo{width:auto;height:72px;object-fit:contain;margin-bottom:6px}
     /* ── Hero ── */
@@ -79,6 +81,18 @@
     .hero-pills{display:flex;justify-content:center;gap:6px;flex-wrap:wrap;margin-top:8px}
     .hero-pill{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:6px;padding:4px 10px;font-size:12px;color:rgba(255,255,255,.85);font-family:var(--font-display);letter-spacing:.5px}
     /* ── Viaturas ── */
+    .garage{position:relative;aspect-ratio:16/9;overflow:hidden;border-radius:var(--radius-sm);margin-bottom:12px;box-shadow:var(--shadow-md);background:var(--bg)}
+    .garage-in{position:absolute;inset:0;transform-origin:0 0}
+    .garage-in img{display:block;width:100%;height:100%;object-fit:cover}
+    .garage-hs{position:absolute;background:transparent;border:2px solid transparent;border-radius:var(--radius-xs);cursor:pointer;padding:0;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+    .garage-hs:hover:not(:disabled),.garage-hs:focus-visible{border-color:var(--white);background:rgba(255,255,255,.14);outline:none}
+    .garage-hs:disabled{cursor:default}
+    .garage-hs span{position:absolute;left:50%;bottom:100%;transform:translateX(-50%);margin-bottom:2px;background:rgba(0,0,0,.6);color:var(--white);font-family:var(--font-display);font-size:11px;letter-spacing:.5px;padding:1px 6px;border-radius:4px;white-space:nowrap;pointer-events:none}
+    .garage.zoom .garage-in{transform:translate(var(--tx),var(--ty)) scale(var(--s));transition:transform .6s var(--ease-out)}
+    .garage.zoom{opacity:0;transition:opacity .25s ease .38s}
+    .garage.zoom .garage-hs span{display:none}
+    .garage.back .garage-in{animation:garageback .6s var(--ease-out) both}
+    @keyframes garageback{from{transform:translate(var(--tx),var(--ty)) scale(var(--s))}to{transform:none}}
     .veh-card{display:flex;align-items:center;gap:12px;background:var(--surface);border:1.5px solid var(--border);border-left-width:3px;border-radius:10px;padding:12px 12px 12px 10px;margin-bottom:8px;cursor:pointer;transition:border-color .2s,background .2s,box-shadow .2s;min-height:64px;touch-action:manipulation}
     .veh-card:hover{background:var(--paper-2);border-color:var(--text3)}
     .veh-card.selected{background:var(--red-light);border-color:var(--red) !important;box-shadow:0 0 0 1px rgba(var(--red-solid-rgb),.18)}
@@ -272,7 +286,7 @@ function renderAuth(){
   }
   if(authState==='pending'){
     root.innerHTML=`<div class="auth-wrap">
-      <img class="auth-bg-img" src="img/banner.jpg" alt="" onerror="this.style.display='none'">
+      <img class="auth-bg-img" src="img/quartel/fachada-vertical.webp" alt="" onerror="this.style.display='none'">
       <div class="auth-bg"></div>
       <div class="auth-content">
       <div style="max-width:380px;width:100%">
@@ -292,7 +306,7 @@ function renderAuth(){
   }
   if(authState==='register'){
     root.innerHTML=`<div class="auth-wrap">
-      <img class="auth-bg-img" src="img/banner.jpg" alt="" onerror="this.style.display='none'">
+      <img class="auth-bg-img" src="img/quartel/fachada-vertical.webp" alt="" onerror="this.style.display='none'">
       <div class="auth-bg"></div>
       <div class="auth-content">
       <div style="max-width:380px;width:100%">
@@ -318,7 +332,7 @@ function renderAuth(){
   }
   // Login
   root.innerHTML=`<div class="auth-wrap">
-    <img class="auth-bg-img" src="img/banner.jpg" alt="" onerror="this.style.display='none'">
+    <img class="auth-bg-img" src="img/quartel/fachada-vertical.webp" alt="" onerror="this.style.display='none'">
     <div class="auth-bg"></div>
     <div class="auth-content">
     <div style="max-width:380px;width:100%">
@@ -1746,6 +1760,31 @@ function renderAdmin(){
 // ════════════════════════════════════
 //  RENDER
 // ════════════════════════════════════
+// ── Garagem (home): fachada com viaturas tocáveis. Coordenadas em % da imagem 1280x720.
+// Teto: só ids fixos (abt660 = ABT; abt9468 não tem área). Se ABT 9468 voltar, trocar o vid aqui.
+const GARAGE=[
+  {vid:'abt660',x:16,y:50.5,w:22,h:33,cx:.27,cy:.67},
+  {vid:'ar797',x:42.6,y:54.9,w:13,h:30,cx:.49,cy:.70},
+  {vid:'atm1209',x:56.2,y:61.8,w:16.8,h:22.9,cx:.646,cy:.73}
+];
+let garageBack=null,garageBusy=false;
+const garageVars=g=>{const s=2.2;return `--s:${s};--tx:${((.5-s*g.cx)*100).toFixed(1)}%;--ty:${((.5-s*g.cy)*100).toFixed(1)}%`;};
+function garageHtml(){
+  const ativos=new Set(vhAtivas().map(v=>v.id));
+  const back=garageBack&&GARAGE.find(g=>g.vid===garageBack);garageBack=null;
+  const reduz=window.matchMedia&&matchMedia('(prefers-reduced-motion:reduce)').matches;
+  const hs=GARAGE.filter(g=>ativos.has(g.vid)).map(g=>{const v=VH.find(x=>x.id===g.vid);return `<button class="garage-hs" data-vid="${g.vid}" onclick="garageGo('${g.vid}')" aria-label="Conferir ${esc(v.name)}" ${identOk()?'':'disabled'} style="left:${g.x}%;top:${g.y}%;width:${g.w}%;height:${g.h}%"><span>${esc(v.name)}</span></button>`;}).join('');
+  return `<div class="garage${back&&!reduz?' back':''}" id="garage" ${back?`style="${garageVars(back)}"`:''}><div class="garage-in"><img src="img/quartel/fachada-horizontal.webp" alt="Fachada do quartel do 4º PelBM, São Marcos, com as viaturas" onerror="this.parentNode.parentNode.style.display='none'">${hs}</div></div>`;
+}
+window.garageGo=vid=>{
+  if(garageBusy||!identOk())return;
+  const g=GARAGE.find(x=>x.vid===vid);if(!g)return;
+  const entra=()=>{garageBusy=false;garageBack=vid;selVids=[vid];startNew();};
+  const el=document.getElementById('garage');
+  const reduz=window.matchMedia&&matchMedia('(prefers-reduced-motion:reduce)').matches;
+  if(!el||reduz){entra();return;}
+  garageBusy=true;el.setAttribute('style',garageVars(g));el.classList.add('zoom');setTimeout(entra,620);
+};
 function render(){
   if(authState!=='app'){renderAuth();return;}
   if(screen==='selectResp'){renderSelectResp();return;}
@@ -1765,6 +1804,7 @@ function render(){
   </div>
 </header>
 <div style="padding:14px">
+${garageHtml()}
 ${hasResume()?`<div class="resume-banner"><div><div style="color:var(--green);font-weight:700;font-size:13px">${icn('check')} Conferência em andamento</div><div style="font-size:13px;color:var(--text2)">${prog.done}/${prog.total} itens · ${prog.pct}%</div></div><button onclick="retomar()" style="background:var(--green);color:var(--white);border:none;border-radius:8px;padding:8px 14px;cursor:pointer;font-family:var(--font-display);font-weight:700;font-size:13px">RETOMAR ${icn('arrowRight',13)}</button></div>`:''}
 <div class="card">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
