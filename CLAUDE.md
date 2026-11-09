@@ -46,6 +46,15 @@ Trabalho em português.
   `viaturas_custom/{vid}.oculta`. Viatura oculta some da home (`vhAtivas()`) e da conferência (`getAct()`
   ignora mesmo se estiver no `selVids` do celular); checklist intacto. Para viatura emprestada/baixada,
   nunca tirar do array `VH`.
+- **Garagem, fotos e mapa (b14, v2026.8.4/8.5)**: home com a fachada do quartel (`img/quartel/`) e as viaturas
+  tocáveis (toque nunca apaga conferência em andamento); login com a fachada vertical. ABT 660: foto no topo
+  de cada seção, mapa da viatura (abas Motorista/Carona/Teto/Cabine, cortinas tocáveis com selo de andamento)
+  e cortina que abre ao entrar na seção. Mapa seção→foto é constante no código por `sec.id` (não mexe em
+  `rows`/`items`); imagens em `img/secoes/{vid}/` e `img/viaturas/`, WebP, fora do pré-cache do SW. Originais
+  e notas em `materiais/marca/fotos/{vid}/` (gitignorado). Outras viaturas: sem mapa até replicar.
+- **Lista de fábrica vs banco**: item de fábrica (formato `items`) é chaveado pela POSIÇÃO; no código só
+  correção de texto. Mudança de lista vai pelo painel (grava `rows` com id estável). A lista real está no
+  banco (`checklist_custom`); comparar foto com lista exige ler o banco (login do João, IA só lê).
 - Site: https://bomrillaz.github.io/cbmrs-conferencia-de-material/
 - Repo: github.com/bomrillaz/cbmrs-conferencia-de-material, branch `main`.
 - Firebase: projeto `cbmrs-ti`, RTDB `cbmrs-ti-default-rtdb` — **diferente do `ctsp-estudos`**, não
@@ -130,13 +139,15 @@ Trabalho em português.
   trivial. Sonnet é o padrão; Opus só na fase de decisão de mudança estrutural.
 - Verificação leve: `bash verify_conferencia.sh` (contagens de `esc()`/`innerHTML`, viaturas presentes,
   sintaxe balanceada). Rodar antes de qualquer commit que toque `index.html`.
-  Baseline 2026-10-25 (b12, v2026.8.1; igual na b13, v2026.8.2): `esc()=99` · `innerHTML=21` · `initializeApp=1` ·
+  Baseline 2026-11-09 (b14, v2026.8.5): `esc()=106` · `innerHTML=23` · `initializeApp=1` ·
   `ADMIN_EMAIL=4` · `unsafe-eval=0` · `checkRateLimit=2` · `patchItemStatus=2` · `patchProgress=2`.
   Divergência = investigar antes de seguir. (`ADMIN_EMAIL` 3→4 na b11: filtro do admin master no
   `loadEfetivo`; `esc()` 97→99 na b12: o rank fora da lista entra escapado no select de graduação.)
   (`innerHTML` subiu 18→21: 3 pontos que trocaram `.textContent` por `.innerHTML` pra caber ícone SVG —
   botão salvar checklist (2x) e botão Próxima/Concluir do patch anti-piscada, todos com texto fixo do
   código, não dado de usuário — não precisam de `esc()`.)
+  (b14: `esc()` 99→106 = rótulos da garagem e selos/títulos do mapa; `innerHTML` 21→23 = overlay da
+  cortina e quadro do mapa, só texto fixo do código.)
 - **Teste de tela pós-login (home/checklist/admin/resumo) exige login manual do João.** A IA nunca
   digita credencial — abre a aba (navegador embutido do chat) e o João loga; a IA só observa depois.
   Padrão herdado do CTSP: não completar uma conferência de verdade durante o teste, só abrir e conferir
