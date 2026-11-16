@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Sistema de conferência de material do Corpo de Bombeiros Militar — 1ª CiaBM / 4º PelBM — São Marcos RS">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' https://*.googleapis.com https://*.gstatic.com https://*.firebase.com https://*.firebaseio.com https://*.firebaseapp.com https://www.recaptcha.net https://recaptcha.net https://www.google.com https://www.gstatic.com wss://*.firebaseio.com data: blob:; object-src 'none'; base-uri 'self'; form-action 'none';">
-  <!-- CBMRS — Conferência de Material 2026 · v2026.8.10 — mapa: laterais inteiras com a cabine tocável · v2026.8.9 — mapa: aba Cabine primeiro e sem foto · v2026.8.8 — assinatura Bomrillaz, botões do topo maiores, tela acesa e vibração · v2026.8.7 — login volta à foto anterior; voltar fecha modal antes de sair da tela · v2026.8.6 — fotos recortadas no vão da cortina, botão Início, voltar do Android e Recomeçar · v2026.8.5 — mapa: abas Teto e Cabine com foto · v2026.8.4 — ABT 660: foto na seção, mapa da viatura e cortina que abre · v2026.8.3 — fachada do quartel no login e garagem na home · v2026.8.2 — ocultar viatura pelo painel admin (viatura fora do quartel) -and-drop) + login funcional com responsável selecionável -->
+  <!-- CBMRS — Conferência de Material 2026 · v2026.8.11 — AR 1629: fotos por seção, mapa e nomes técnicos · v2026.8.10 — mapa: laterais inteiras com a cabine tocável · v2026.8.9 — mapa: aba Cabine primeiro e sem foto · v2026.8.8 — assinatura Bomrillaz, botões do topo maiores, tela acesa e vibração · v2026.8.7 — login volta à foto anterior; voltar fecha modal antes de sair da tela · v2026.8.6 — fotos recortadas no vão da cortina, botão Início, voltar do Android e Recomeçar · v2026.8.5 — mapa: abas Teto e Cabine com foto · v2026.8.4 — ABT 660: foto na seção, mapa da viatura e cortina que abre · v2026.8.3 — fachada do quartel no login e garagem na home · v2026.8.2 — ocultar viatura pelo painel admin (viatura fora do quartel) -and-drop) + login funcional com responsável selecionável -->
   <title>CBMRS — Conferência de Material | 1ª CiaBM · 4º PelBM</title>
   <meta name="theme-color" content="#D32412">
   <meta property="og:site_name" content="Conferência de Material · Bomrillaz">
@@ -902,22 +902,22 @@ const VH = [
 //  As RESPOSTAS de cada viatura são sempre independentes: chave = `${section.id}_${i}`
 // ════════════════════════════════════
 const _KIT_HEM=Object.freeze([
-  ['Luvas','2 PARES'],['Ataduras','2 UN'],['Compressas de Gases','2 UN'],
+  ['Luvas','2 PARES'],['Ataduras','2 UN'],['Compressas de Gaze','2 UN'],
   ['Bandagens Triangulares 100% Algodão','2 UN'],['Esparadrapo','DIVERSOS'],['Fita Microporosa','1 UN'],
 ]);
 const _KIT_CUR=Object.freeze([
   ['Ataduras','4 UN'],['Esparadrapo','DIVERSOS'],['Fita Microporosa','DIVERSOS'],
-  ['Gazes','DIVERSAS'],['Solução Fisiológica','DIVERSAS'],['Luvas','5 UN'],
+  ['Gazes','DIVERSOS'],['Soro Fisiológico 0,9%','DIVERSOS'],['Luvas','5 UN'],
 ]);
 const _KIT_QUE=Object.freeze([
-  ['Ataduras de 1,80m','2 UN'],['Fita Microporosa','1 UN'],['Soluções Fisiológicas','2 UN'],
-  ['Gazes','DIVERSAS'],['Luvas','2 UN'],['Bandagens Triangulares 100% Algodão','2 UN'],
+  ['Ataduras de 1,80m','2 UN'],['Fita Microporosa','1 UN'],['Soro Fisiológico 0,9%','2 UN'],
+  ['Gazes','DIVERSOS'],['Luvas','2 UN'],['Bandagens Triangulares 100% Algodão','2 UN'],
   ['Pinça','1 UN'],['Capas Protetoras Queimadura/Evisceração 90x1,2','2 UN'],['Manta Aluminizada','1 UN'],
 ]);
 
 const SC=[
   {id:'ar_cab',vid:'ar797',title:'CABINE',icon:'🚗',items:[
-    ['Chave VTR','1 UN'],['Controle Portão','1 UN'],['Diário de Bordo — Conferir KM','1 UN'],
+    ['Chave VTR','1 UN'],['Controle do Portão','1 UN'],['Diário de Bordo — Conferir KM','1 UN'],
     ['Caixa de Máscara Facial Descartável','1 UN'],['Caixa de Luva de Procedimento','1 UN'],
     ['Lanterna RAC Lite e Carregador (cabo e fonte)','1 UN'],['Rolo Fita Zebrada','1 UN'],
     ['Triângulo de Sinalização','1 UN'],['Extintor de Incêndio (Banco)','1 UN'],
@@ -927,21 +927,21 @@ const SC=[
   {id:'ar_sal',vid:'ar797',title:'SALÃO DA RESGATE',icon:'🏥',items:[
     ['Extintor de Incêndio','1 UN'],['Extensão Trifásica','1 UN'],
     ['Serra Sabre com Lâminas','1 UN c/ 2 baterias'],['Revestimento Encosto','1 UN'],
-    ['Cadeira de Rodas','1 UN'],['Maca Scoop','1 UN'],['Maca Rígida Completa','1 UN'],
+    ['Cadeira de Rodas','1 UN'],['Maca Scoop','1 UN'],['Prancha Longa Completa','1 UN'],
     ['DEA — verificar pás','1 par pediátricas + 5 pares adultas'],['Lençol de Transporte','1 UN'],
-    ['Álcool Etílico','1 UN'],['Água Oxigenada','3 UN'],['Solução Antisséptico Aquosa','2 UN'],
-    ['Álcool Iodado','1 UN'],['Soro Fisiológico','5 UN 100ml + 2 UN 250ml'],
+    ['Álcool Etílico','1 UN'],['Água Oxigenada','3 UN'],['Solução Antisséptica Aquosa','2 UN'],
+    ['Álcool Iodado','1 UN'],['Soro Fisiológico 0,9%','5 UN 100ml + 2 UN 250ml'],
     ['Algodão Hidrofílico','1 UN'],['Kit Parto','1 UN'],['Talas','1G - 3M - 3P - 2PP'],
-    ['Solução Fisiológica','DIVERSAS'],['Gazes','DIVERSA'],['Óculos Nasal','DIVERSA'],
-    ['Lençol para Colchão Maca Retrátil','DIVERSA'],['Kit Método START','1 UN'],
-    ['Aspirador de Secreção Portátil','1 UN'],['Máscara Não Reinalante (Hudson)','1 adulto + 1 infantil'],
-    ['Óculos Nasal','3 UN'],['Mangueira de Fluxo de Ar','1 UN'],['Pacote de Palitos','1 UN'],
-    ['Gazes','DIVERSA'],['Ataduras','DIVERSA'],['Fita Crepe','DIVERSA'],['Micropore','DIVERSA'],
-    ['Esparadrapo','DIVERSA'],['Água Oxigenada','DIVERSA'],['Solução Fisiológica','DIVERSA'],
+    ['Soro Fisiológico 0,9%','DIVERSOS'],['Gazes','DIVERSOS'],['Cateter Nasal Tipo Óculos','DIVERSOS'],
+    ['Lençol para Colchão Maca Retrátil','DIVERSOS'],['Kit Método START','1 UN'],
+    ['Aspirador de Secreção Portátil','1 UN'],['Máscara Não Reinalante','1 adulto + 1 infantil'],
+    ['Cateter Nasal Tipo Óculos','3 UN'],['Extensão para Oxigênio','1 UN'],['Pacote de Palitos','1 UN'],
+    ['Gazes','DIVERSOS'],['Ataduras','DIVERSOS'],['Fita Crepe','DIVERSOS'],['Fita Microporosa','DIVERSOS'],
+    ['Esparadrapo','DIVERSOS'],['Água Oxigenada','DIVERSOS'],['Soro Fisiológico 0,9%','DIVERSOS'],
     ['Colar Cervical','1G+1M+1P+2PP+2 Neo Nato+2 Regulável'],
   ]},
   {id:'ar_aph',vid:'ar797',title:'BOLSA APH — Kit Sinais Vitais',icon:'🎒',items:[
-    ['Maca de Arrasto','1 UN'],['Glicosímetro + tiras reagentes e auto lancetas','TIRAS E LANCETAS'],
+    ['Maca de Arrasto','1 UN'],['Glicosímetro + tiras reagentes e lancetas','TIRAS E LANCETAS'],
     ['Oxímetro','1 UN'],['Caneta Lanterna','1 UN'],['Termômetro','1 UN'],
     ['Esfigmomanômetro','1 UN'],['Estetoscópio','1 UN'],
   ]},
@@ -950,22 +950,22 @@ const SC=[
   {id:'ar_que',vid:'ar797',title:'KIT QUEIMADURA / EVISCERAÇÃO',icon:'🔥',items:_KIT_QUE},
   {id:'ar_cmp',vid:'ar797',title:'COMPARTIMENTO PRINCIPAL',icon:'📦',items:[
     ['Kit Acessórios (luz química, manta, tesoura, martelo emergência)','1 JG'],
-    ['Ambú Adulto','1 UN'],['Ambú Infantil','1 UN'],['Fita Zebrada','2 UN'],
-    ['Máscara Pocket','2 UN'],['Cateter p/ Oxigênio — Tipo Óculos','2 UN'],
-    ['Cânula de Guedel','3 UN (tam. 02, 03 e 04)'],['Extensão para Oxigênio','4 UN'],
+    ['Reanimador Manual Adulto','1 UN'],['Reanimador Manual Infantil','1 UN'],['Fita Zebrada','2 UN'],
+    ['Máscara Pocket','2 UN'],['Cateter Nasal Tipo Óculos','2 UN'],
+    ['Cânula Orofaríngea','3 UN (tam. 02, 03 e 04)'],['Extensão para Oxigênio','4 UN'],
     ['Extensão / Coligação','2 UN'],['Kit Parto (verificar validade)','1 UN'],
-    ['Aspirador 3P Medical com Orifício 3m','1 UN'],['Sonda Asp. Traqueal Aspiro','1 UN'],
+    ['Sonda de Aspiração Rígida (Yankauer) com Extensão','1 UN'],['Sonda de Aspiração Traqueal','1 UN'],
     ['Colar Cervical','1P + 1PP'],['Talas','1 Roxa, 2 Azuis, 1 Verde, 1 Laranja'],
   ]},
   {id:'b60_cab',vid:'abt660',title:'CABINE',icon:'🚗',items:[
     ['Controle da Torre de Iluminação','1 UN'],['Controle Sem Fio Guincho','1 UN'],
     ['Lanterna Amarela L-3000','1 UN'],['Diário de Bordo — Conferir KM','1 UN'],
-    ['Controle Portão','1 UN'],['Caixa Luva de Procedimento','1 UN'],
+    ['Controle do Portão','1 UN'],['Caixa de Luva de Procedimento','1 UN'],
     ['Máscaras Combate a Incêndio','3 UN'],['Fita Zebrada','1 UN'],
-    ['Controle Manual Guincho com Fio','1 UN'],['Colares Cervicais','2 UN'],
-    ['Conjunto Coxins','1 JG'],['Extintor de Incêndio','1 UN'],
+    ['Controle Manual Guincho com Fio','1 UN'],['Colar Cervical','2 UN'],
+    ['Imobilizador Lateral de Cabeça','1 JG'],['Extintor de Incêndio','1 UN'],
     ['Freezer com Garrafas de Água','1 UN'],['Macaco Hidráulico','1 UN'],
-    ['Caixa com Manuais do Caminhão','1 UN'],['EPRA Completa - Arelho e Carona','3 CIL. mín. 200 bar'],
+    ['Caixa com Manuais do Caminhão','1 UN'],['EPRA Completa - Arrelho e Carona','3 CIL. mín. 200 bar'],
   ]},
   {id:'b60_epra',vid:'abt660',title:'BOLSA APH — Kit Sinais Vitais',icon:'🎒',items:[
     ['Maca de Arrasto','1 UN'],['Glicosímetro + tiras reagentes e lancetas','TIRAS E LANCETAS'],
@@ -977,20 +977,20 @@ const SC=[
   {id:'b60_que',vid:'abt660',title:'KIT QUEIMADURA / EVISCERAÇÃO',icon:'🔥',items:_KIT_QUE},
   {id:'b60_cmp',vid:'abt660',title:'COMPARTIMENTO PRINCIPAL',icon:'📦',items:[
     ['Kit Acessórios (luz química, manta, tesoura, martelo emergência)','1 JG'],
-    ['Ambú Adulto','1 UN'],['Ambú Infantil','1 UN'],['Fita Zebrada','2 UN'],
-    ['Máscara Pocket','2 UN'],['Cateter p/ Oxigênio — Tipo Óculos','2 UN'],
-    ['Cânula de Guedel','3 UN (tam. 02, 03 e 04)'],['Extensão para Oxigênio','4 UN'],
+    ['Reanimador Manual Adulto','1 UN'],['Reanimador Manual Infantil','1 UN'],['Fita Zebrada','2 UN'],
+    ['Máscara Pocket','2 UN'],['Cateter Nasal Tipo Óculos','2 UN'],
+    ['Cânula Orofaríngea','3 UN (tam. 02, 03 e 04)'],['Extensão para Oxigênio','4 UN'],
     ['Extensão / Coligação','2 UN'],['Kit Parto (verificar validade)','1 UN'],
-    ['Aspirador 3P Medical com Orifício 3m','1 UN'],['Sonda Asp. Traqueal Aspiro','1 UN'],
+    ['Sonda de Aspiração Rígida (Yankauer) com Extensão','1 UN'],['Sonda de Aspiração Traqueal','1 UN'],
     ['Colar Cervical','1P + 1PP'],['Talas','1 Roxa, 1 Azul, 1 Verde, 1 Laranja'],
   ]},
   {id:'b60_c1',vid:'abt660',title:'CORTINA 01 — Lado Motorista',icon:'🪟',items:[
     ['Maca Envelope','1 UN'],['Motosserra (ligar nas segundas-feiras)','4 UN'],
-    ['Maca Rígida Completa + Cinto Polvo e Imobilizador de Cabeça','1 JG'],['Cones Grandes','10 UN'],
+    ['Prancha Longa Completa + Cinto Polvo e Imobilizador de Cabeça','1 JG'],['Cones Grandes','10 UN'],
   ]},
   {id:'b60_c2',vid:'abt660',title:'CORTINA 02 — Lado Motorista',icon:'🪟',items:[
-    ['Caixa 1: Roupas de Apicultor','3 UN'],['Caixa 2: Combustíveis e Gasolina','DIVERSA'],
-    ['Caixa 3: Óleo para Motosserra e Hidráulico','DIVERSO'],
+    ['Caixa 1: Roupas de Apicultor','3 UN'],['Caixa 2: Combustíveis e Gasolina','DIVERSOS'],
+    ['Caixa 3: Óleo para Motosserra e Hidráulico','DIVERSOS'],
     ['Caixa de Ferramentas (Verificar se Completas)','2 UN'],
     ['Calços Metálicos','2 UN'],['Luvas Isoladas (borracha)','1 PAR'],
     ['Cilindro de Oxigênio Portátil','1 UN'],['Calço Escalonado','2 UN'],
@@ -998,17 +998,17 @@ const SC=[
   ]},
   {id:'b60_c3',vid:'abt660',title:'CORTINA 03 — Lado Motorista',icon:'🪟',items:[
     ['Martelo de Borracha','1 UN'],['Cilindros de EPRA','3 UN'],
-    ['Galão com Serragem','1 UN'],['Mangueiras de 1,5"','4 UN'],['Mangueiras de 2,5"','4 UN'],
+    ['Galão com Serragem','1 UN'],['Mangueira de 1,5"','4 UN'],['Mangueira de 2,5"','4 UN'],
   ]},
   {id:'b60_c4',vid:'abt660',title:'CORTINA 04 — Lado Motorista',icon:'🪟',items:[
-    ['Esguichos de 1,5"','2 UN'],['Esguicho 2,5"','1 UN'],['Reduções Storz','2 UN'],
+    ['Esguicho de 1,5"','2 UN'],['Esguicho de 2,5"','1 UN'],['Redução Storz','2 UN'],
     ['Mangueira de 2,5" (acoplada na expedição)','1 UN'],['Divisor','1 UN'],
-    ['Mangueira de 1,5"','3 UN'],['Chaves de Mangueira','2 UN'],
+    ['Mangueira de 1,5"','3 UN'],['Chave de Mangueira','2 UN'],
   ]},
   {id:'b60_c5',vid:'abt660',title:'CORTINA 05 — Lado Carona',icon:'🪟',items:[
-    ['Esguicho 1,5"','1 UN'],['Esguicho 2,5"','1 UN'],['Divisor','1 UN'],
-    ['Redução Storz','2 UN'],['Mangueira 2,5"','2 UN'],['Mangueira 1,5"','4 UN'],
-    ['Chave de Mangueira','2 UN'],['Mangueira Abastecimento','1 UN'],
+    ['Esguicho de 1,5"','1 UN'],['Esguicho de 2,5"','1 UN'],['Divisor','1 UN'],
+    ['Redução Storz','2 UN'],['Mangueira de 2,5"','2 UN'],['Mangueira de 1,5"','4 UN'],
+    ['Chave de Mangueira','2 UN'],['Mangueira de Abastecimento','1 UN'],
     ['Luvas do Hidrante e Conexões','6 UN + 1 conj. conexão + 1 conexão macho'],
     ['Conjunto Conexão','1 UN'],['Conexão Macho','1 UN'],
   ]},
@@ -1024,7 +1024,7 @@ const SC=[
     ['Mangueira de Engate Rápido (testar ferramentas nas quartas-feiras)','2 UN'],
   ]},
   {id:'b60_c8',vid:'abt660',title:'CORTINA 08 — Salvamento em Altura',icon:'🧗',items:[
-    ['Caixa 01: Corda para Corte de Árvores','Diversa'],
+    ['Caixa 01: Corda para Corte de Árvores','DIVERSOS'],
     ['Caixa 02: Extintores','2 UN (1 ABC + 1 BC)'],
     ['Caixa Laranja: Corda Salvamento em Altura 50m','1 UN'],
     ['Caixa com Cordas para Corte de Árvore','2 UN'],
@@ -1056,34 +1056,34 @@ const SC=[
     ['Máscaras Faciais (EPRA)','3 UN'],['EPRA Completa (Arrelho e Carona)','3 CIL. mín. 200 bar'],
   ]},
   {id:'b94_aph',vid:'abt9468',title:'BOLSA APH — Kit Sinais Vitais',icon:'🎒',items:[
-    ['Ambú Adulto','1 UN'],['Ambú Infantil','1 UN'],['Monitor de Sinais Vitais','1 UN'],
-    ['Ataduras','DIVERSA'],['Esparadrapo','1 UN'],['Micropore','1 UN'],
-    ['Ataduras de Algodão','DIVERSA'],['Máscara Pocket','1 UN'],['Protetor Facial Compacto','1 UN'],
-    ['Soro Intravenoso','2 UN 250ml'],['Gazes e Luvas','DIVERSA'],['Tesouras','2 UN'],
-    ['Soro Fisiológico','4 UN 100ml'],['Esfigmomanômetro','1 adulto + 1 infantil'],
-    ['Kit Medidor de Glicemia','1 UN'],['Manta Aluminizada','DIVERSAS'],
-    ['Gazes (bolso lateral esquerdo)','DIVERSAS'],['Ataduras (bolso lateral direito)','DIVERSAS'],
+    ['Reanimador Manual Adulto','1 UN'],['Reanimador Manual Infantil','1 UN'],['Monitor de Sinais Vitais','1 UN'],
+    ['Ataduras','DIVERSOS'],['Esparadrapo','1 UN'],['Fita Microporosa','1 UN'],
+    ['Ataduras de Algodão','DIVERSOS'],['Máscara Pocket','1 UN'],['Protetor Facial Compacto','1 UN'],
+    ['Soro Intravenoso','2 UN 250ml'],['Gazes e Luvas','DIVERSOS'],['Tesouras','2 UN'],
+    ['Soro Fisiológico 0,9%','4 UN 100ml'],['Esfigmomanômetro','1 adulto + 1 infantil'],
+    ['Glicosímetro + tiras reagentes e lancetas','1 UN'],['Manta Aluminizada','DIVERSOS'],
+    ['Gazes (bolso lateral esquerdo)','DIVERSOS'],['Ataduras (bolso lateral direito)','DIVERSOS'],
     ['Caixa de Material Bio Contaminado','2 UN'],
   ]},
   {id:'b94_g1',vid:'abt9468',title:'GAVETA 01 — Lado Motorista',icon:'🗂️',items:[
-    ['Esguicho 1,5"','1 UN'],['Divisor','1 UN'],['Conexão Macho/Fêmea Rosca','2 UN'],
+    ['Esguicho de 1,5"','1 UN'],['Divisor','1 UN'],['Conexão Macho/Fêmea Rosca','2 UN'],
     ['Redução Storz','1 UN'],['Proporcionador de Espuma','1 UN'],
   ]},
   {id:'b94_g2',vid:'abt9468',title:'GAVETA 02 — Lado Motorista',icon:'🗂️',items:[
-    ['Mangueira 2,5','3 UN'],
+    ['Mangueira de 2,5"','3 UN'],
   ]},
   {id:'b94_g3',vid:'abt9468',title:'GAVETA 03 — Lado Motorista',icon:'🗂️',items:[
     ['Calço Escalonado de Madeira','2 UN'],
   ]},
   {id:'b94_ct',vid:'abt9468',title:'CORTINAS TRASEIRAS',icon:'🚒',items:[
-    ['Cones Grandes','4 UN'],['Hi-Lift','2 UN'],['Malho','1 UN'],['Halligan','1 UN'],
+    ['Cones Grandes','4 UN'],['Macaco de Alavanca (Hi-Lift)','2 UN'],['Malho','1 UN'],['Halligan','1 UN'],
     ['Croque de 2 Lanços','1 UN'],['Corta Vergalhão','1 UN'],['Machado','1 UN'],
     ['Enxada','1 UN'],['Colete Salva Vidas','2 UN'],
   ]},
   {id:'b94_g4',vid:'abt9468',title:'GAVETA 04 — Lado Carona',icon:'🗂️',items:[['Galão LGE','1 UN']]},
   {id:'b94_g5',vid:'abt9468',title:'GAVETA 05 — Lado Motorista',icon:'🗂️',items:[
-    ['Mangueira 2,5"','1 UN'],['Mangueira 1,5','5 UN'],
-    ['Esguicho 1,5','1 UN'],['Redução Storz','1 UN'],['Chave de Mangote','2 UN'],
+    ['Mangueira de 2,5"','1 UN'],['Mangueira de 1,5"','5 UN'],
+    ['Esguicho de 1,5"','1 UN'],['Redução Storz','1 UN'],['Chave de Mangote','2 UN'],
   ]},
   {id:'b94_ps',vid:'abt9468',title:'Parte Superior',icon:'⬆️',items:[
     ['Batedores Fogo em Mato','3 UN'],['Foice','1 UN'],['Picareta','1 UN'],
@@ -1278,7 +1278,7 @@ function _cleanCustomSC(data){
 // ════════════════════════════════════
 //  ÍCONES — SVG inline (substitui emoji de UI; sec.icon do checklist continua emoji livre)
 // ════════════════════════════════════
-const APP_VER='2026.8.10';
+const APP_VER='2026.8.11';
 const bzSig=(claro)=>`<div class="bz-sig${claro?' claro':''}"><img src="assets/cesar-coin.png" alt="" onerror="this.remove()"><span>por Bomrillaz</span></div>`;
 const ICONS={
   home:'<path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/>',
@@ -1382,11 +1382,16 @@ function secProg(s){const rows=secChecks(s);let d=0;rows.forEach(r=>{if(response
 // Mapa seção→fotos fica aqui (por sec.id); não mexe no formato rows/items do checklist_custom.
 const FOTOS_SEC={
   b60_c1:['c1'],b60_c2:['c2'],b60_c3:['c3'],b60_c4:['c4'],b60_c5:['c5'],b60_c6:['c6a','c6b'],b60_c7:['c7'],b60_c8:['c8'],
-  b60_cb:['cb'],b60_ms:['ms'],b60_ps:['ps1','ps2','ps3']
+  b60_cb:['cb'],b60_ms:['ms'],b60_ps:['ps1','ps2','ps3'],
+  // AR 1629 (ar797): arquivos com prefixo "a" em img/secoes/ar797/ (nomes não colidem com os da ABT em FOTO_DIM)
+  ar_cort:['acort'],ar_sal:['asal'],ar_sal_c1:['ac1'],ar_sal_c2:['ac2'],ar_sal_c3:['ac3'],ar_sal_c4:['ac4'],
+  ar_sal_g1:['ag1'],ar_sal_g2:['ag2'],ar_sal_pe:['ape']
 };
+const FECH=new Set(['c1','c2','c3','c4','c5','c6a','c7','c8','acort']); // fotos que têm versão fechada (<chave>f.webp) p/ a cortina animada
+const dirSec=sid=>'img/secoes/'+(sid.startsWith('ar_')?'ar797':'abt660')+'/';
 // largura×altura de cada foto recortada: a moldura já nasce no formato certo, sem pulo ao carregar. Trocou a foto → atualizar aqui.
-const FOTO_DIM={c1:[662,960],c2:[641,986],c3:[662,499],c4:[540,998],c5:[597,1152],c6a:[698,550],c6b:[648,524],c7:[597,986],c8:[676,1063],cb:[655,1178],ms:[662,1191],ps1:[1280,461],ps2:[1280,447],ps3:[1280,389]};
-const fotosDe=sec=>sec.vid==='abt660'?(FOTOS_SEC[sec.id]||[]):[];
+const FOTO_DIM={c1:[662,960],c2:[641,986],c3:[662,499],c4:[540,998],c5:[597,1152],c6a:[698,550],c6b:[648,524],c7:[597,986],c8:[676,1063],cb:[655,1178],ms:[662,1191],ps1:[1280,461],ps2:[1280,447],ps3:[1280,389],acort:[662,875],asal:[700,941],ac1:[960,328],ac2:[960,499],ac3:[700,366],ac4:[700,360],ag1:[600,1066],ag2:[600,1066],ape:[960,540]};
+const fotosDe=sec=>FOTOS_SEC[sec.id]||[];
 // Áreas em % da imagem: [sec.id, rótulo, x, y, largura, altura]
 const MAPA_ABT660={
   // laterais inteiras (com cabine, b15): a cabine é área tocável que leva à seção Cabine
@@ -1394,13 +1399,27 @@ const MAPA_ABT660={
     ['b60_cab','CAB',3.9,14.4,29.8,59.4],['b60_c1','C01',40.1,19.6,11.3,36.4],['b60_c2','C02',52.0,19.6,15.0,55.7],['b60_c3','C03',67.2,19.6,17.3,36.4],['b60_c4','C04',85.0,19.6,10.8,49.8]]},
   car:{ar:1100/483,img:'img/viaturas/abt660-carona.webp',alt:'ABT 660, lado da carona',areas:[
     ['b60_c8','C08',50.1,17.3,10.6,32.0],['b60_c7','C07',33.9,17.3,16.0,61.1],['b60_c6','C06',14.1,17.3,19.5,32.0],['b60_c5','C05',2.4,17.3,11.6,60.4],['b60_cab','CAB',70.3,16.6,26.6,56.9]],
-    extra:['b60_cb','b60_ms']},
+    rev:true,extra:[['Ficam na Cortina 08:',['b60_cb','b60_ms']]]},
   teto:{foto:'img/viaturas/abt660-teto.webp',alt:'ABT 660, vista de cima do teto',sid:'b60_ps',lb:'TETO',cards:['b60_ps']}
 };
 // a conferência começa pela Cabine: ela é a 1ª área da lateral do motorista (aba que abre por padrão)
-const MAPA_ABAS=[['mot','Motorista'],['car','Carona'],['teto','Teto']];
+const MAPA_AR={
+  mot:{ar:1100/521,img:'img/viaturas/ar797-motorista.webp',alt:'AR, lado do motorista',areas:[
+    ['ar_cab','CAB',3.0,23.2,37.4,56.1],['ar_cort','CORT',40.7,25.7,17.2,48.2]]},
+  car:{ar:1100/531,img:'img/viaturas/ar797-carona.webp',alt:'AR, lado da carona',areas:[
+    ['ar_cab','CAB',63.9,20.8,33.8,64.1],['ar_sal','SALÃO',38.0,13.8,25.1,69.5]],
+    extra:[['Ficam no Salão:',['ar_sal_c1','ar_sal_c2','ar_sal_c3','ar_sal_c4','ar_sal_g1','ar_sal_g2','ar_sal_pe']],['Bolsa APH e kits:',['ar_aph','ar_hem','ar_cur','ar_que','ar_cmp']]]},
+  tra:{foto:'img/viaturas/ar797-traseira.webp',alt:'AR, vista traseira (portas do salão)',sid:'ar_sal',lb:'SALÃO',cards:['ar_sal'],
+    extra:[['Ficam no Salão:',['ar_sal_c1','ar_sal_c2','ar_sal_c3','ar_sal_c4','ar_sal_g1','ar_sal_g2','ar_sal_pe']],['Bolsa APH e kits:',['ar_aph','ar_hem','ar_cur','ar_que','ar_cmp']]]}
+};
+// um mapa por viatura: abas + áreas. Viatura sem entrada aqui não tem mapa.
+const MAPAS={
+  abt660:{abas:[['mot','Motorista'],['car','Carona'],['teto','Teto']],m:MAPA_ABT660},
+  ar797:{abas:[['mot','Motorista'],['car','Carona'],['tra','Traseira']],m:MAPA_AR}
+};
 let mapaTab='mot';
-const hasMapa=()=>getAct().some(s=>s.vid==='abt660');
+const mapaVid=()=>{const s=getAct().find(s=>MAPAS[s.vid]);return s?s.vid:null;};
+const hasMapa=()=>!!mapaVid();
 function secEstado(sid){
   const s=getAct().find(x=>x.id===sid);if(!s)return null;
   const p=secProg(s),nc=secChecks(s).some(r=>responses[rowKey(s,r)]?.status==='nc');
@@ -1411,8 +1430,9 @@ function mapaCard(sid){
   return`<button class="mapa-card s${e.st}${e.nc?' nc':''}" onclick="mapaSec('${sid}')"><i></i><span>${esc(e.s.title)}</span><em>${e.p.done}/${e.p.total}${e.nc?' · N/C':''}</em></button>`;
 }
 function renderMapaHtml(){
-  const m=MAPA_ABT660[mapaTab],prog=getProg();
-  const tabs=MAPA_ABAS.map(([k,n])=>`<button class="mapa-tab${k===mapaTab?' on':''}" onclick="mapaAba('${k}')" aria-pressed="${k===mapaTab}">${n}</button>`).join('');
+  const mv=mapaVid(),MP=MAPAS[mv];if(!MP.abas.some(a=>a[0]===mapaTab))mapaTab='mot';
+  const m=MP.m[mapaTab],prog=getProg();
+  const tabs=MP.abas.map(([k,n])=>`<button class="mapa-tab${k===mapaTab?' on':''}" onclick="mapaAba('${k}')" aria-pressed="${k===mapaTab}">${n}</button>`).join('');
   let body='';
   if(m.img){
     body+=`<div class="mapa-wrap"><img src="${m.img}" alt="${esc(m.alt)}">${m.areas.map(([sid,lb,x,y,w,h])=>{
@@ -1424,11 +1444,12 @@ function renderMapaHtml(){
     const e=secEstado(m.sid);
     if(e)body+=`<div class="mapa-wrap"><img src="${m.foto}" alt="${esc(m.alt)}"><button class="mapa-area s${e.st}${e.nc?' nc':''}" style="left:1.5%;top:2.5%;width:97%;height:95%" onclick="mapaSec('${m.sid}')" aria-label="${esc(e.s.title)}: ${e.p.done} de ${e.p.total}${e.nc?', com não conformidade':''}"><b>${m.lb} ${e.p.done}/${e.p.total}</b></button></div>`;
   }
-  const ordem=m.areas?(mapaTab==='car'?[...m.areas].reverse():m.areas).map(a=>a[0]):[];
-  const cards=[...ordem,...(m.extra||[]),...(m.cards||[])];
-  if(cards.length)body+=`<div class="mapa-cards">${cards.map(sid=>(m.extra&&sid===m.extra[0]?'<div class="mapa-leg" style="padding:2px 0 0">Ficam na Cortina 08:</div>':'')+mapaCard(sid)).join('')}</div>`;
+  const ordem=m.areas?(m.rev?[...m.areas].reverse():m.areas).map(a=>a[0]):[];
+  const grupos=(m.extra||[]).map(([tit,ids])=>{const h=ids.map(mapaCard).join('');return h?`<div class="mapa-leg" style="padding:2px 0 0">${tit}</div>${h}`:'';}).join('');
+  const cards=[...ordem,...(m.cards||[])].map(mapaCard).join('')+grupos;
+  if(cards)body+=`<div class="mapa-cards">${cards}</div>`;
   body+=`<div class="mapa-leg">Verde: tudo respondido · Amarelo: em andamento · Cinza: nada ainda · Borda vermelha: tem N/C</div>`;
-  return`<div class="sticky-hdr" style="background:var(--navy)"><div style="display:flex;justify-content:space-between;align-items:center"><div style="font-size:20px;font-weight:900;letter-spacing:1px;text-transform:uppercase" class="ff">ABT 660 — Mapa</div><div style="font-size:18px;font-weight:900" class="ff">${prog.pct}%</div></div><button class="btn-mapa" onclick="goHome()" aria-label="Voltar ao início">${icn('home',13)} Início</button><div class="prog-bg" style="margin-top:6px"><div class="prog-fill" style="width:${prog.pct}%"></div></div></div><div class="mapa-tabs">${tabs}</div>${body}`;
+  return`<div class="sticky-hdr" style="background:var(--navy)"><div style="display:flex;justify-content:space-between;align-items:center"><div style="font-size:20px;font-weight:900;letter-spacing:1px;text-transform:uppercase" class="ff">${esc((VH.find(v=>v.id===mv)||{}).name||'')} — Mapa</div><div style="font-size:18px;font-weight:900" class="ff">${prog.pct}%</div></div><button class="btn-mapa" onclick="goHome()" aria-label="Voltar ao início">${icn('home',13)} Início</button><div class="prog-bg" style="margin-top:6px"><div class="prog-fill" style="width:${prog.pct}%"></div></div></div><div class="mapa-tabs">${tabs}</div>${body}`;
 }
 window.abreMapa=()=>{setState({screen:'mapa',_keepScroll:false});};
 window.mapaAba=t=>{mapaTab=t;render();};
@@ -1443,13 +1464,14 @@ window.fotoAmplia=src=>{
 // ── Cortina que abre (só troca de SEÇÃO, só transform/opacity; toque pula; reduced-motion = corte direto) ──
 let lastSecId=null;
 function cortinaInfo(sid){
-  for(const k of ['mot','car']){const m=MAPA_ABT660[k],a=m.areas.find(x=>x[0]===sid);if(a)return{k,img:m.img,a,ar:m.ar};}
+  for(const v in MAPAS)for(const k of ['mot','car']){const m=MAPAS[v].m[k],a=m.areas.find(x=>x[0]===sid);if(a)return{k,v,img:m.img,a,ar:m.ar};}
   return null;
 }
-const cortFechada=sid=>`img/secoes/abt660/${FOTOS_SEC[sid][0]}f.webp`;
+const temFech=sid=>!!FOTOS_SEC[sid]&&FECH.has(FOTOS_SEC[sid][0]);
+const cortFechada=sid=>`${dirSec(sid)}${FOTOS_SEC[sid][0]}f.webp`;
 function precarrega(sid){
-  const i=cortinaInfo(sid);if(!i||!FOTOS_SEC[sid])return;
-  [i.img,cortFechada(sid),`img/secoes/abt660/${FOTOS_SEC[sid][0]}.webp`].forEach(u=>{const im=new Image();im.src=u;});
+  const i=cortinaInfo(sid);if(!i||!temFech(sid))return;
+  [i.img,cortFechada(sid),`${dirSec(sid)}${FOTOS_SEC[sid][0]}.webp`].forEach(u=>{const im=new Image();im.src=u;});
 }
 function cortZoom(W,H,a,ar){ // transform que leva a área (em % da lateral 16:9) ao centro do quadro
   const iw=W,ih=W/ar,top=(H-ih)/2,[,,x,y,w,h]=a;
@@ -1458,11 +1480,11 @@ function cortZoom(W,H,a,ar){ // transform que leva a área (em % da lateral 16:9
   return`translate(${W/2-cx*sc}px,${H/2-cy*sc-top}px) scale(${sc})`;
 }
 function animaCortina(sec,prevSid){
-  const info=FOTOS_SEC[sec.id]?cortinaInfo(sec.id):null;
+  const info=temFech(sec.id)?cortinaInfo(sec.id):null;
   if(!info||(window.matchMedia&&matchMedia('(prefers-reduced-motion:reduce)').matches))return;
   const btn=document.querySelector('.sec-fotos .sec-foto');if(!btn||!btn.animate)return;
   const W=btn.clientWidth,H=btn.clientHeight;if(!W||!H)return;
-  const pi=prevSid?cortinaInfo(prevSid):null,same=!!pi&&pi.k===info.k;
+  const pi=prevSid?cortinaInfo(prevSid):null,same=!!pi&&pi.k===info.k&&pi.v===info.v;
   const ov=document.createElement('div');ov.className='cort-ov';ov.setAttribute('aria-hidden','true');
   ov.innerHTML=`<div class="cort-bg"></div><div class="cort-lat" style="width:${W}px;height:${W/info.ar}px;top:${(H-W/info.ar)/2}px"><img src="${info.img}" alt=""></div><img class="cort-fech" src="${cortFechada(sec.id)}" alt="">`;
   btn.appendChild(ov);
@@ -1487,7 +1509,7 @@ function fotosHtml(sec){
   const f=fotosDe(sec);if(!f.length)return'';
   const tam=k=>{const d=FOTO_DIM[k];if(!d)return'';const ar=(d[0]/d[1]).toFixed(4);return` style="width:min(${f.length>1?84:100}%,calc(min(56vh,420px)*${ar}))"`;};
   const ar=k=>FOTO_DIM[k]?` style="aspect-ratio:${FOTO_DIM[k][0]}/${FOTO_DIM[k][1]}"`:'';
-  return`<div class="sec-fotos${f.length>1?' multi':''}">${f.map((k,i)=>`<button class="sec-foto"${tam(k)} onclick="fotoAmplia('img/secoes/abt660/${k}.webp')" aria-label="Ampliar foto ${i+1} de ${f.length} da seção"><img src="img/secoes/abt660/${k}.webp" loading="lazy"${ar(k)} alt="Foto do compartimento ${f.length>1?(i+1)+'/'+f.length:''}"><span>${f.length>1?(i+1)+'/'+f.length+' · ':''}toque p/ ampliar</span></button>`).join('')}</div>`;
+  return`<div class="sec-fotos${f.length>1?' multi':''}">${f.map((k,i)=>`<button class="sec-foto"${tam(k)} onclick="fotoAmplia('${dirSec(sec.id)}${k}.webp')" aria-label="Ampliar foto ${i+1} de ${f.length} da seção"><img src="${dirSec(sec.id)}${k}.webp" loading="lazy"${ar(k)} alt="Foto do compartimento ${f.length>1?(i+1)+'/'+f.length:''}"><span>${f.length>1?(i+1)+'/'+f.length+' · ':''}toque p/ ampliar</span></button>`).join('')}</div>`;
 }
 function getNCs(){const ncs=[];getAct().forEach(s=>secChecks(s).forEach(r=>{const rr=responses[rowKey(s,r)];if(rr?.status==='nc'){const v=VH.find(v=>v.id===s.vid);ncs.push({veh:v.name,sec:s.title,name:r.name,qty:r.qty,obs:rr.obs||''});}}));return ncs;}
 
@@ -2060,7 +2082,7 @@ ${bzSig(false)}
     else{
       root.innerHTML=`<div class="page">${renderMapaHtml()}<div class="bottom-bar"><button onclick="setState({screen:'checklist',_keepScroll:false})" class="nav-btn" style="flex:2;background:var(--red);color:var(--white)">Ir para o checklist ${icn('arrowRight')}</button><button onclick="goSummary()" class="nav-btn" aria-label="Ver resumo" style="background:transparent;border:1px solid var(--border);padding:12px 14px;color:var(--text2)">${icn('chart')}</button></div></div>`;
       window.scrollTo(0,0);_keepScroll=false;lastSecId=null;
-      setTimeout(()=>MAPA_ABT660[mapaTab].areas&&MAPA_ABT660[mapaTab].areas.forEach(a=>precarrega(a[0])),400);return;
+      setTimeout(()=>{const mm=MAPAS[mapaVid()]?.m[mapaTab];mm?.areas&&mm.areas.forEach(a=>precarrega(a[0]));},400);return;
     }
   }
 
