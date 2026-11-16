@@ -1158,6 +1158,45 @@ function setState(patch){
 // ════════════════════════════════════
 //  HISTÓRICO — Firebase (compartilhado)
 // ════════════════════════════════════
+// Mescla uma entrada na lista do histórico: mesma id atualiza no lugar; id nova entra NA POSIÇÃO DA SUA DATA (desc), não no topo
+// (entrada enviada com atraso não pode virar "conferência anterior" de uma mais nova). Teto: 10 (FIFO, a mais antiga sai).
+const mesclaHist=(lista,entry)=>{
+  const k=lista.findIndex(x=>x&&x.id===entry.id);
+  if(k>=0){const c=lista.slice();c[k]=entry;return c;}
+  const t=x=>{const n=Date.parse(x&&x.date);return isNaN(n)?0:n;};
+  const c=[entry,...lista];
+  return c.map((x,i)=>[x,i]).sort((a,b)=>(t(b[0])-t(a[0]))||(a[1]-b[1])).map(a=>a[0]).slice(0,10);
+};
+// Fila local de conferências concluídas que o banco ainda não confirmou (sobrevive a fechar o app).
+const PEND='cbm5_hist_pend';
+const pendLe=()=>{try{const a=JSON.parse(localStorage.getItem(PEND)||'[]');return Array.isArray(a)?a.filter(x=>x&&x.id!=null):[];}catch(e){return [];}};
+const pendGrava=a=>{try{if(a.length)localStorage.setItem(PEND,JSON.stringify(a));else localStorage.removeItem(PEND);}catch(e){}};
+const pendPoe=entry=>pendGrava(pendLe().filter(x=>x.id!==entry.id).concat([entry]));
+const pendTira=id=>pendGrava(pendLe().filter(x=>x.id!==id));
+const mesclaPend=lista=>pendLe().reduce(mesclaHist,lista);
+const avisoPend=()=>{const n=pendLe().length;return n?`<div style="background:var(--amber-light);border:1px solid var(--amber);border-radius:8px;padding:10px;margin-bottom:10px;font-size:13px;color:var(--amber)">${icn('warning',13)} ${n} conferência(s) salva(s) no aparelho, aguardando envio. Envia sozinho quando tiver sinal; não desinstale o app.</div>`:'';};
+let _enviando=false;
+async function enviaPendentes(){
+  if(_enviando||typeof fbDb==='undefined'||!fbDb||!currentUser)return;
+  _enviando=true;
+  try{
+    for(const entry of pendLe()){
+      const r=await fbDb.ref('historico').transaction(cur=>mesclaHist(listaDoNo(cur),entry));
+      if(!r.committed)break;
+      pendTira(entry.id);
+      history_cbm=mesclaPend(listaDoNo(r.snapshot.val()));
+      try{localStorage.setItem('cbm5_hist',JSON.stringify(history_cbm));}catch(e){}
+    }
+  }catch(e){}
+  _enviando=false;
+  if(screen==='home'||screen==='history')render();
+}
+let _rede=false;
+function ligaEnvioPendentes(){
+  if(_rede)return;_rede=true;
+  window.addEventListener('online',enviaPendentes);
+  try{fbDb.ref('.info/connected').on('value',s=>{if(s.val()===true)enviaPendentes();});}catch(e){}
+}
 async function saveToHistory(){
   const prog=getProg();
   if(prog.total===0)return;
@@ -1176,13 +1215,13 @@ async function saveToHistory(){
     pct:prog.pct,
     ncs:getNCs(),
   };
-  // upsert por id: retomar uma conferência já gravada atualiza a mesma entrada; senão entra no topo (FIFO de 10). transaction: não atropela gravação de outro aparelho.
-  const upsert=lista=>{const k=lista.findIndex(x=>x&&x.id===entry.id);if(k>=0){const c=lista.slice();c[k]=entry;return c;}return [entry,...lista].slice(0,10);};
-  history_cbm=upsert(history_cbm);
+  // upsert por id (mesclaHist): retomar uma conferência já gravada atualiza a mesma entrada. transaction: não atropela gravação de outro aparelho.
+  history_cbm=mesclaHist(history_cbm,entry);
   try{localStorage.setItem(CONF_ID,String(entry.id));localStorage.setItem('cbm5_hist',JSON.stringify(history_cbm));}catch(e){}
+  pendPoe(entry); // fila ANTES da transação; só sai quando o banco confirmar (committed)
   try{
-    const r=await fbDb.ref('historico').transaction(cur=>upsert(listaDoNo(cur)));
-    if(r.committed){history_cbm=listaDoNo(r.snapshot.val());try{localStorage.setItem('cbm5_hist',JSON.stringify(history_cbm));}catch(e){}}
+    const r=await fbDb.ref('historico').transaction(cur=>mesclaHist(listaDoNo(cur),entry));
+    if(r.committed){pendTira(entry.id);history_cbm=mesclaPend(listaDoNo(r.snapshot.val()));try{localStorage.setItem('cbm5_hist',JSON.stringify(history_cbm));}catch(e){}}
   }catch(e){}
 }
 async function loadHistory(){
@@ -1190,9 +1229,11 @@ async function loadHistory(){
     const snap=await fbDb.ref('historico').once('value');
     const d=snap.val();
     if(d){history_cbm=listaDoNo(d);}
+    history_cbm=mesclaPend(history_cbm);
     try{localStorage.setItem('cbm5_hist',JSON.stringify(history_cbm));}catch(e){}
   }catch(e){
     try{const h=localStorage.getItem('cbm5_hist');if(h)history_cbm=JSON.parse(h);}catch(e2){}
+    history_cbm=mesclaPend(history_cbm);
   }
 }
 // Remove UMA conferência pelo id, via transaction: não atropela gravação simultânea em campo (set de lista inteira atropelaria).
@@ -1206,7 +1247,8 @@ window.excluirConferencia=async id=>{
   if(!confirm('Excluir esta conferência?\n\n'+quando+' · '+quem+' · '+vts+' · '+(e.pct||0)+'%\n\nNão dá para desfazer.'))return;
   try{
     const r=await fbDb.ref('historico').transaction(cur=>cur==null?cur:listaDoNo(cur).filter(x=>x&&x.id!==id));
-    history_cbm=listaDoNo(r.snapshot.val());
+    pendTira(id);
+    history_cbm=mesclaPend(listaDoNo(r.snapshot.val()));
     try{localStorage.setItem('cbm5_hist',JSON.stringify(history_cbm));if(localStorage.getItem(CONF_ID)===String(id))limpaMarcaConf();}catch(e2){}
   }catch(err){
     alert('Erro ao excluir: '+(err&&err.code||err&&err.message||'desconhecido'));
@@ -1216,7 +1258,7 @@ window.excluirConferencia=async id=>{
 };
 window.clearHistory=async()=>{
   if(!confirm('Apagar todo o histórico de conferências?'))return;
-  history_cbm=[];
+  history_cbm=[];pendGrava([]);
   try{localStorage.removeItem('cbm5_hist');}catch(e){}
   try{await fbDb.ref('historico').set([]);}catch(e){}
   render();
@@ -2028,6 +2070,7 @@ function render(){
 </header>
 <div style="padding:14px">
 ${garageHtml()}
+${avisoPend()}
 ${hasResume()?`<div class="resume-banner"><div><div style="color:var(--green);font-weight:700;font-size:13px">${icn('check')} Conferência em andamento</div><div style="font-size:13px;color:var(--text2)">${prog.done}/${prog.total} itens · ${prog.pct}%</div></div><div style="display:flex;flex-direction:column;gap:6px"><button onclick="retomar()" style="background:var(--green);color:var(--white);border:none;border-radius:8px;padding:8px 14px;cursor:pointer;font-family:var(--font-display);font-weight:700;font-size:13px">CONTINUAR ${icn('arrowRight',13)}</button><button onclick="startNew()" style="background:transparent;color:var(--text2);border:1px solid var(--border);border-radius:8px;padding:6px 10px;cursor:pointer;font-family:var(--font-display);font-weight:700;font-size:12px">${icn('undo',12)} RECOMEÇAR</button></div></div>`:''}
 <div class="card">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
@@ -2229,7 +2272,8 @@ ${ncs.length?`<button onclick="gerarParte()" class="btn-gold">${icn('file')} GER
   ${isAdminUI()?`<button onclick="clearHistory()" style="background:transparent;border:1px solid var(--border);border-radius:6px;padding:4px 10px;color:var(--red);cursor:pointer;font-size:13px;font-family:var(--font-display)">LIMPAR</button>`:`<div style="width:60px"></div>`}
 </div>
 <div style="padding:14px">
-  <div style="font-size:13px;color:var(--text3);margin-bottom:12px">Últimas ${history_cbm.length}/10 conferências registradas. Sincronizado entre todos os dispositivos. ${icn('cloud',12)}</div>
+  <div style="font-size:13px;color:var(--text3);margin-bottom:12px">Últimas ${history_cbm.length}/10 conferências registradas. ${pendLe().length?'':'Sincronizado entre todos os dispositivos. '+icn('cloud',12)}</div>
+  ${avisoPend()}
   ${cards}
 </div>
 </div>`;
@@ -2392,7 +2436,7 @@ window.finalizarChecklist=function(){
 };
 
 function executarFinalizacao(){
-  saveToHistory(); // grava (ou atualiza) a conferência antes do reset; sem item respondido não grava
+  const _salvo=saveToHistory(); // grava (ou atualiza) a conferência antes do reset; sem item respondido não grava
   const voltaSelectResp=sessionResp?.viaFuncional===true;
   // Reset completo do estado
   responses={};secIdx=0;selVids=VH.map(v=>v.id);
@@ -2410,12 +2454,18 @@ function executarFinalizacao(){
       <div style="font-family:var(--font-display);font-size:30px;font-weight:900;color:var(--green);letter-spacing:2px;text-transform:uppercase">Checklist Finalizado</div>
       <div style="height:2px;background:linear-gradient(90deg,transparent,var(--green) 30%,var(--green) 70%,transparent);margin:18px 0"></div>
       <div style="font-family:var(--font-display);font-size:26px;font-weight:900;color:var(--ember);letter-spacing:4px;text-transform:uppercase;display:flex;align-items:center;justify-content:center;gap:8px">${icn('fire',26)} Bom Serviço! ${icn('fire',26)}</div>
+      <div id="fin-pend" style="display:none;margin-top:16px;background:var(--amber-light);border:1px solid var(--amber);border-radius:8px;padding:10px;font-size:13px;color:var(--amber)">${icn('warning',13)} Salvo no aparelho. Envia sozinho quando tiver sinal; não desinstale o app.</div>
       <div style="color:var(--text3);font-size:12px;margin-top:20px;letter-spacing:1px;text-transform:uppercase">Retornando à tela inicial...</div>
     </div>
   </div>`;
 
   // Retorno automático à tela inicial após 3s (ou à seleção de responsável, em conta funcional)
-  setTimeout(()=>{setState({screen:voltaSelectResp?'selectResp':'home'});},3000);
+  // Sem confirmação do banco em 1,5 s (sem sinal): avisa que ficou na fila local e segura a tela mais tempo para dar para ler.
+  let _vai=false;const vai=()=>{if(_vai)return;_vai=true;setState({screen:voltaSelectResp?'selectResp':'home'});};
+  Promise.race([_salvo.then(()=>'ok',()=>'ok'),new Promise(r=>setTimeout(()=>r('lento'),1500))]).then(q=>{
+    if(q==='lento'&&pendLe().length){const el=document.getElementById('fin-pend');if(el)el.style.display='block';setTimeout(vai,5000);}
+    else setTimeout(vai,1500);
+  });
 }
 
 // ════════════════════════════════════
@@ -2476,6 +2526,7 @@ fbAuth.onAuthStateChanged(async user=>{
     }
     authState='app';
     await loadHistory();
+    ligaEnvioPendentes();enviaPendentes();
     await loadCustomVeiculos();
     await loadCustomChecklist();
     load();
