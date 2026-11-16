@@ -52,7 +52,12 @@ Trabalho em português.
   laterais INTEIRAS com a cabine como área tocável "CAB" desde a b15, sem aba Cabine) e cortina que abre ao
   entrar na seção. Mapa seção→foto é constante no código por `sec.id` (não mexe em `rows`/`items`); imagens em
   `img/secoes/{vid}/` e `img/viaturas/`, WebP, fora do pré-cache do SW. Originais e notas em
-  `materiais/marca/fotos/{vid}/` (gitignorado). Outras viaturas: sem mapa até replicar.
+  `materiais/marca/fotos/{vid}/` (gitignorado).
+  **AR 1629 (b16, v2026.8.11):** mapa generalizado por viatura — `MAPAS={abt660,ar797}` (abas por viatura; AR =
+  Motorista/Carona/Traseira), `FECH` = fotos com versão fechada (cortina só anima nelas), `dirSec()` = pasta por `vid`;
+  fotos da AR com prefixo `a` em `img/secoes/ar797/` (chaves de `FOTO_DIM` não colidem). Viatura nova com mapa = entrada
+  em `MAPAS` + `FOTOS_SEC` + `FOTO_DIM`. ATM 1209 e SOP: sem mapa até replicar.
+  **Nome de item (b16):** nome técnico, não marca, igual em todas as viaturas; quantidade vaga = "DIVERSOS".
   **Fotos de seção (b15):** recortadas só no vão da cortina; a moldura tira o tamanho de `FOTO_DIM` (style
   inline), nunca da imagem carregada — sem isso a cortina não anima no celular (foto chega depois da animação).
   Trocou/recortou foto → atualizar `FOTO_DIM`.
@@ -149,7 +154,7 @@ Trabalho em português.
   trivial. Sonnet é o padrão; Opus só na fase de decisão de mudança estrutural.
 - Verificação leve: `bash verify_conferencia.sh` (contagens de `esc()`/`innerHTML`, viaturas presentes,
   sintaxe balanceada). Rodar antes de qualquer commit que toque `index.html`.
-  Baseline 2026-11-09 (b14, v2026.8.5; igual na b15, v2026.8.10): `esc()=106` · `innerHTML=23` · `initializeApp=1` ·
+  Baseline 2026-11-16 (b16, v2026.8.11): `esc()=107` · `innerHTML=23` · `initializeApp=1` ·
   `ADMIN_EMAIL=4` · `unsafe-eval=0` · `checkRateLimit=2` · `patchItemStatus=2` · `patchProgress=2`.
   Divergência = investigar antes de seguir. (`ADMIN_EMAIL` 3→4 na b11: filtro do admin master no
   `loadEfetivo`; `esc()` 97→99 na b12: o rank fora da lista entra escapado no select de graduação.)
@@ -157,7 +162,7 @@ Trabalho em português.
   botão salvar checklist (2x) e botão Próxima/Concluir do patch anti-piscada, todos com texto fixo do
   código, não dado de usuário — não precisam de `esc()`.)
   (b14: `esc()` 99→106 = rótulos da garagem e selos/títulos do mapa; `innerHTML` 21→23 = overlay da
-  cortina e quadro do mapa, só texto fixo do código.)
+  cortina e quadro do mapa, só texto fixo do código. b16: `esc()` 106→107 = nome da viatura no título do mapa.)
 - **Teste de tela pós-login (home/checklist/admin/resumo) exige login manual do João.** A IA nunca
   digita credencial — abre a aba (navegador embutido do chat) e o João loga; a IA só observa depois.
   Padrão herdado do CTSP: não completar uma conferência de verdade durante o teste, só abrir e conferir
