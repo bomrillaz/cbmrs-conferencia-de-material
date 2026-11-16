@@ -3,10 +3,11 @@
    Firebase SDK (gstatic /firebasejs/) passam pelo cache. TUDO que é Firebase DINÂMICO
    (RTDB firebaseio.com, Auth googleapis.com) passa DIRETO, sem intercept — senão o SW
    cacheava as chamadas do banco e o app abriria zerado / "sem conexão".
-   - navegação (HTML): network-first (offline cai no cache).
+   - navegação (HTML): network-first com prazo de 3,5 s (lento/offline cai no cache).
    - demais GET elegíveis: stale-while-revalidate. */
 
 const CACHE = 'cbmrs-conferencia-cache-v14';
+const NAV_PRAZO_MS = 3500;
 const SAME = [
   './', 'index.html', 'manifest.webmanifest',
   'assets/icon-192.png', 'assets/icon-512.png', 'assets/cesar-coin.png',
@@ -23,7 +24,7 @@ const CROSS = [
 self.addEventListener('install', (e) => {
   e.waitUntil((async () => {
     const cache = await caches.open(CACHE);
-    await Promise.allSettled(SAME.map((u) => cache.add(u)));
+    await Promise.allSettled(SAME.map((u) => cache.add(new Request(u, { cache: 'no-cache' }))));
     await Promise.allSettled(CROSS.map(async (u) => {
       try { const r = await fetch(u, { mode: 'no-cors' }); await cache.put(u, r); } catch (_) {}
     }));
@@ -41,6 +42,18 @@ self.addEventListener('activate', (e) => {
 
 self.addEventListener('message', (e) => {
   if (e.data && e.data.type === 'SKIP_WAITING') self.skipWaiting();
+  if (e.data && e.data.type === 'cache-urls' && Array.isArray(e.data.urls)) {
+    // Só same-origin dentro de img/ (pré-cache de fotos pedido pelo app).
+    const base = new URL('./', self.location.href);
+    const ok = [];
+    e.data.urls.forEach((u) => {
+      try {
+        const x = new URL(u, base);
+        if (x.origin === base.origin && x.pathname.indexOf(base.pathname + 'img/') === 0) ok.push(x.href);
+      } catch (_) {}
+    });
+    e.waitUntil(caches.open(CACHE).then((c) => Promise.allSettled(ok.map((u) => c.add(u)))));
+  }
 });
 
 function cachePut(req, res) {
@@ -61,9 +74,17 @@ self.addEventListener('fetch', (e) => {
   if (!sameOrigin && !sdkEstatico) return;
 
   if (req.mode === 'navigate') {
+    // Rede com prazo: sinal fraco não prende a abertura. Perdeu a corrida e há cache → serve o cache
+    // e o fetch termina em segundo plano atualizando-o (waitUntil). Sem cache, espera a rede.
+    const rede = fetch(req, { cache: 'no-cache' }).then((res) => { cachePut(req, res.clone()); return res; });
+    const doCache = () => caches.match(req, { ignoreSearch: true }).then((r) => r || caches.match('index.html'));
+    const prazo = new Promise((ok) => setTimeout(() => ok(null), NAV_PRAZO_MS));
+    e.waitUntil(rede.catch(() => {}));
     e.respondWith(
-      fetch(req).then((res) => { cachePut(req, res.clone()); return res; })
-        .catch(() => caches.match(req, { ignoreSearch: true }).then((r) => r || caches.match('index.html')))
+      Promise.race([rede, prazo]).then(
+        (res) => res || doCache().then((c) => c || rede),
+        () => doCache().then((c) => c || Response.error())
+      )
     );
     return;
   }
