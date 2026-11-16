@@ -104,6 +104,9 @@ Trabalho em português.
     `loadHistory`/excluir/limpar passam pela fila. Aviso âmbar na home, no histórico e no "Finalizado".
 - **Postos (`rankOpts`, único ponto da lista):** inclui "Soldado Temporário" (b12). Rank gravado fora
   da lista entra como option selecionada; nunca cai no primeiro item (antes trocava o posto calado).
+- **Ordem de antiguidade (b17, v2026.8.14):** `ANTIGUIDADE` (ids funcionais, campo `re`, ordem da planilha
+  `materiais/referencia/efetivo_4pelbm_2026-11-09.png`) ordena a escolha de responsável (`loadEfetivo`) e a lista
+  do painel (`loadAdmin`). Fora da lista = fim, por nome. Militar novo ou promoção = editar a constante.
 - **Identidade Bomrillaz (b12):** tokens alinhados ao `:root` do CTSP (`--red #C92211`, `--dur-*`,
   `--ease-*`, `--font-display`, `--white`, `--z-*`), Barlow Condensed **local** (`assets/fonts/`,
   `@font-face`), corpo `-apple-system`. `--green-deep` é token local da Conferência. Tema escuro fora,
@@ -167,7 +170,7 @@ Trabalho em português.
   trivial. Sonnet é o padrão; Opus só na fase de decisão de mudança estrutural.
 - Verificação leve: `bash verify_conferencia.sh` (contagens de `esc()`/`innerHTML`, viaturas presentes,
   sintaxe balanceada). Rodar antes de qualquer commit que toque `index.html`.
-  Baseline 2026-11-16 (b17, v2026.8.13): `esc()=107` · `innerHTML=24` · `initializeApp=1` ·
+  Baseline 2026-11-16 (b17, v2026.8.14): `esc()=107` · `innerHTML=24` · `initializeApp=1` ·
   `ADMIN_EMAIL=4` · `unsafe-eval=0` · `checkRateLimit=2` · `patchItemStatus=2` · `patchProgress=2`.
   Divergência = investigar antes de seguir. (`ADMIN_EMAIL` 3→4 na b11: filtro do admin master no
   `loadEfetivo`; `esc()` 97→99 na b12: o rank fora da lista entra escapado no select de graduação.)
