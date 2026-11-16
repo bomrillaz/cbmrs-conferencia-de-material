@@ -7,7 +7,7 @@ Trabalho em português.
 
 ## 1. ARQUITETURA
 
-- **Um único `index.html`** (~2200 linhas, ~326 KB, medido em 25/10/2026). Sem `data.js` separado.
+- **Um único `index.html`** (~2600 linhas, ~186 KB, medido em 16/11/2026, b17). Sem `data.js` separado.
 - **PWA instalável** (b1, 2026-08-19): `manifest.webmanifest` + `sw.js` + `assets/icon-192.png` /
   `icon-512.png` / `icon-maskable-512.png` (gerados a partir do brasão CBMRS já embutido no site).
   `sw.js` segue a MESMA regra de ouro do CTSP: nunca intercepta Firebase dinâmico
@@ -23,8 +23,10 @@ Trabalho em português.
   - `downloadParteDoc()`/`gerarParte()` (documento Word) — usa hex **literal**, não `var()`: o Word não
     resolve CSS custom properties. Só o cabeçalho de tabela foi ajustado pro vermelho da marca
     (`#C92211`, alinhado ao CTSP em 25/10/2026, b12; continua literal).
-  - Brasão do CBMRS e fotos das viaturas — imagens PNG/JPEG embutidas em base64, cor cravada no pixel,
-    mantidas como identidade oficial militar (decisão do João, não da marca Bomrillaz).
+  - Brasão do CBMRS e fotos das viaturas — imagens PNG/JPEG, cor cravada no pixel, mantidas como
+    identidade oficial militar (decisão do João, não da marca Bomrillaz). Desde a b17 (v2026.8.13) moram em
+    arquivo (`assets/brasao-cbmrs.png`, `img/viaturas/thumb-*.jpg`, no `SAME` do `sw.js`), mesmos bytes do
+    base64 antigo (hash conferido), com OK do João. Não reencodar nem trocar sem decisão nova.
   - Tela de login (`renderAuth()`) usa `img/banner.jpg` (foto operacional) + `assets/cesar-coin.png`
     (mascote/logo) — **copiados do repo `bomrillaz-estudos`** por pedido explícito do João, não gerados
     do zero. Se o CTSP trocar esses assets, replicar aqui só se pedido.
@@ -62,7 +64,9 @@ Trabalho em português.
   **Nome de item (b16):** nome técnico, não marca, igual em todas as viaturas; quantidade vaga = "DIVERSOS".
   **Fotos de seção (b15):** recortadas só no vão da cortina; a moldura tira o tamanho de `FOTO_DIM` (style
   inline), nunca da imagem carregada — sem isso a cortina não anima no celular (foto chega depois da animação).
-  Trocou/recortou foto → atualizar `FOTO_DIM`.
+  Trocou/recortou foto → atualizar `FOTO_DIM`. **b17:** fotos com cortina (ABT `c1..c8`, AR `acort`) refeitas
+  dos originais com correção de perspectiva pelo vão da cortina; aberta e fechada com o mesmo recorte e tamanho.
+  Ao abrir/retomar conferência, `precacheFotos()` manda `cache-urls` ao SW (fotos offline).
 - **Navegação (b15, v2026.8.6+):** botão Início no checklist/mapa/resumo; voltar do Android (`syncVoltar` +
   `popstate`, telas em `TELAS_INTERNAS`): fecha modal/lightbox primeiro, depois leva à home; na home fecha o app.
   Home com CONTINUAR/RECOMEÇAR; `startNew` com conferência em andamento sempre pede confirmação (`showModal`).
@@ -111,6 +115,9 @@ Trabalho em português.
   espelho achatado gravado junto, só pra um celular com bundle de cache antigo não cair silenciosamente
   no checklist de fábrica. **Não remover o espelho `items`** até confirmar que todo o efetivo atualizou
   o PWA — normalização fica em `secRows`/`secChecks`/`rowKey` (`index.html`, perto de `getSC()`).
+  **Salvar do editor (b17):** relê `checklist_custom` ao abrir a aba (`ckBase`) e grava por `transaction` com
+  `podeSalvar` (`cur===null` devolve o payload: o SDK reroda com o valor real); conflito = modal de recarregar.
+  N/C repetida compara por `vid+sid+rid` (entradas antigas caem no texto).
 - **Login funcional** (v2026.7.0): conta marcada com `usuarios/{uid}.funcional=true` mostra uma tela
   de escolha de "responsável" (lista vem do nó `efetivo/{uid}`, espelho de `usuarios` legível por
   não-admin) em vez do perfil fixo. Decisão de segurança confirmada com o João: a conta funcional
@@ -160,13 +167,14 @@ Trabalho em português.
   trivial. Sonnet é o padrão; Opus só na fase de decisão de mudança estrutural.
 - Verificação leve: `bash verify_conferencia.sh` (contagens de `esc()`/`innerHTML`, viaturas presentes,
   sintaxe balanceada). Rodar antes de qualquer commit que toque `index.html`.
-  Baseline 2026-11-16 (b17, v2026.8.12; igual à b16): `esc()=107` · `innerHTML=23` · `initializeApp=1` ·
+  Baseline 2026-11-16 (b17, v2026.8.13): `esc()=107` · `innerHTML=24` · `initializeApp=1` ·
   `ADMIN_EMAIL=4` · `unsafe-eval=0` · `checkRateLimit=2` · `patchItemStatus=2` · `patchProgress=2`.
   Divergência = investigar antes de seguir. (`ADMIN_EMAIL` 3→4 na b11: filtro do admin master no
   `loadEfetivo`; `esc()` 97→99 na b12: o rank fora da lista entra escapado no select de graduação.)
   (`innerHTML` subiu 18→21: 3 pontos que trocaram `.textContent` por `.innerHTML` pra caber ícone SVG —
   botão salvar checklist (2x) e botão Próxima/Concluir do patch anti-piscada, todos com texto fixo do
   código, não dado de usuário — não precisam de `esc()`.)
+  (b17: `innerHTML` 23→24 = botão salvar do editor no conflito entre admins, texto fixo.)
   (b14: `esc()` 99→106 = rótulos da garagem e selos/títulos do mapa; `innerHTML` 21→23 = overlay da
   cortina e quadro do mapa, só texto fixo do código. b16: `esc()` 106→107 = nome da viatura no título do mapa.)
 - **Teste de tela pós-login (home/checklist/admin/resumo) exige login manual do João.** A IA nunca

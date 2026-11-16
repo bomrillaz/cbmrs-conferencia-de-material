@@ -6,13 +6,14 @@
    - navegação (HTML): network-first com prazo de 3,5 s (lento/offline cai no cache).
    - demais GET elegíveis: stale-while-revalidate. */
 
-const CACHE = 'cbmrs-conferencia-cache-v15';
+const CACHE = 'cbmrs-conferencia-cache-v16';
 const NAV_PRAZO_MS = 3500;
 const SAME = [
   './', 'index.html', 'manifest.webmanifest',
   'assets/icon-192.png', 'assets/icon-512.png', 'assets/cesar-coin.png',
   'assets/favicon-16.png', 'assets/favicon-32.png', 'assets/apple-touch-icon.png',
-  'img/banner.jpg', 'img/banner.webp',
+  'img/banner.jpg', 'img/banner.webp', 'assets/brasao-cbmrs.png',
+  'img/viaturas/thumb-ar797.jpg', 'img/viaturas/thumb-abt.jpg', 'img/viaturas/thumb-atm.jpg', 'img/viaturas/thumb-sop.jpg',
   'assets/fonts/barlow-condensed-500.woff2', 'assets/fonts/barlow-condensed-600.woff2', 'assets/fonts/barlow-condensed-700.woff2'
 ];
 const CROSS = [
