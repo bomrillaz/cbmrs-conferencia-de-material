@@ -1434,6 +1434,18 @@ const dirSec=sid=>'img/secoes/'+(sid.startsWith('ar_')?'ar797':'abt660')+'/';
 // largura×altura de cada foto recortada: a moldura já nasce no formato certo, sem pulo ao carregar. Trocou a foto → atualizar aqui.
 const FOTO_DIM={c1:[662,960],c2:[641,986],c3:[662,499],c4:[540,998],c5:[597,1152],c6a:[698,550],c6b:[648,524],c7:[597,986],c8:[676,1063],cb:[655,1178],ms:[662,1191],ps1:[1280,461],ps2:[1280,447],ps3:[1280,389],acort:[662,875],asal:[700,941],ac1:[960,328],ac2:[960,499],ac3:[700,366],ac4:[700,360],ag1:[600,1066],ag2:[600,1066],ape:[960,540]};
 const fotosDe=sec=>FOTOS_SEC[sec.id]||[];
+// URLs de img/ a pré-cachear p/ uso offline: fotos das seções (+ versão fechada) e laterais do mapa. Pura: testada em Node.
+function urlsFotosOffline(secs,mapas,fotosSec,fech,dir){
+  const out=new Set(),vids=new Set();
+  secs.forEach(s=>{vids.add(s.vid);(fotosSec[s.id]||[]).forEach(k=>{out.add(dir(s.id)+k+'.webp');if(fech.has(k))out.add(dir(s.id)+k+'f.webp');});});
+  vids.forEach(v=>{const MP=mapas[v];if(!MP)return;Object.values(MP.m).forEach(x=>{if(x.img)out.add(x.img);if(x.foto)out.add(x.foto);});});
+  return[...out].filter(u=>u.startsWith('img/'));
+}
+// sem controller (SW ainda não assumiu) não faz nada; o sw.js só aceita img/ same-origin
+function precacheFotos(){
+  try{const c=navigator.serviceWorker&&navigator.serviceWorker.controller;if(!c)return;
+    c.postMessage({type:'cache-urls',urls:urlsFotosOffline(getAct(),MAPAS,FOTOS_SEC,FECH,dirSec)});}catch(_){}
+}
 // Áreas em % da imagem: [sec.id, rótulo, x, y, largura, altura]
 const MAPA_ABT660={
   // laterais inteiras (com cabine, b15): a cabine é área tocável que leva à seção Cabine
@@ -2293,12 +2305,13 @@ window.toggleHistoryNC=id=>{const el=document.getElementById('hnc_'+id);if(el)el
 window.toggleVeh=v=>{setState({selVids:selVids.includes(v)?selVids.filter(x=>x!==v):[...selVids,v]});};
 window.startNew=()=>{
   if(!vhAtivas().some(v=>selVids.includes(v.id))||!identOk())return;
-  const comeca=()=>{responses={};limpaMarcaConf();save();setState({secIdx:0,screen:hasMapa()?'mapa':'checklist',_keepScroll:false});};
+  const comeca=()=>{responses={};limpaMarcaConf();save();precacheFotos();setState({secIdx:0,screen:hasMapa()?'mapa':'checklist',_keepScroll:false});};
   // conferência em andamento nunca some calada: pergunta antes (modal próprio; confirm() é bloqueado no navegador do app)
   if(hasResume())showModal({title:icn('warning',18)+' Começar do início',msg:'As respostas da conferência em andamento serão apagadas. Continuar?',confirmLabel:'SIM, RECOMEÇAR',cancelLabel:'Cancelar',callback:comeca});
   else comeca();
 };
 window.retomar=()=>{
+  precacheFotos();
   const secs=getAct();let last=0;
   secs.forEach((s,i)=>{if(secChecks(s).some(row=>responses[rowKey(s,row)]?.status))last=i;});
   setState({secIdx:last,screen:hasMapa()?'mapa':'checklist',_keepScroll:false});
