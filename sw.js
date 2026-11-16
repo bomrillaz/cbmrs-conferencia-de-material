@@ -6,7 +6,7 @@
    - navegação (HTML): network-first com prazo de 3,5 s (lento/offline cai no cache).
    - demais GET elegíveis: stale-while-revalidate. */
 
-const CACHE = 'cbmrs-conferencia-cache-v14';
+const CACHE = 'cbmrs-conferencia-cache-v15';
 const NAV_PRAZO_MS = 3500;
 const SAME = [
   './', 'index.html', 'manifest.webmanifest',

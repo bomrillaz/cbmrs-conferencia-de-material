@@ -12,6 +12,8 @@ Trabalho em português.
   `icon-512.png` / `icon-maskable-512.png` (gerados a partir do brasão CBMRS já embutido no site).
   `sw.js` segue a MESMA regra de ouro do CTSP: nunca intercepta Firebase dinâmico
   (`firebaseio.com`/`googleapis.com`), só same-origin + SDK estático (`gstatic`/`firebasejs`).
+  Navegação (v2026.8.12): rede `no-cache` com prazo de 3,5 s (`NAV_PRAZO_MS`); perdeu e há cache, serve
+  o cache e atualiza em segundo plano. Pré-cache `no-cache`. Mensagem `cache-urls` aceita só `img/` same-origin.
 - **Reskin de marca aplicado (b1, 2026-08-19)**: tokens da paleta Bomrillaz tema claro em `:root`
   (bloco `<style>`, topo de `index.html`) — ver `Documents\Claude\vault\30-marca\BOMRILLAZ_DESIGN.md`.
   **Não há sistema de tokens "de fábrica"** — foram criados nesta sessão; qualquer cor nova deve usar
@@ -92,6 +94,10 @@ Trabalho em português.
     (`_cleanCustomSC`, `(x.ncs||[])`, helper `listaDoNo()`).
   - Admin exclui UMA conferência pelo id (`excluirConferencia`, transaction). A regra do RTDB de
     `historico` libera escrita a qualquer aprovado; o botão só para admin é UX, não perímetro.
+  - **Fila local (v2026.8.12):** conferência concluída entra em `localStorage cbm5_hist_pend` ANTES da
+    transaction e só sai no `committed`; `enviaPendentes()` reenvia no boot, no `online` e no
+    `.info/connected`. `mesclaHist` (upsert por id, id nova na posição da data, FIFO 10) é o único merge;
+    `loadHistory`/excluir/limpar passam pela fila. Aviso âmbar na home, no histórico e no "Finalizado".
 - **Postos (`rankOpts`, único ponto da lista):** inclui "Soldado Temporário" (b12). Rank gravado fora
   da lista entra como option selecionada; nunca cai no primeiro item (antes trocava o posto calado).
 - **Identidade Bomrillaz (b12):** tokens alinhados ao `:root` do CTSP (`--red #C92211`, `--dur-*`,
@@ -154,7 +160,7 @@ Trabalho em português.
   trivial. Sonnet é o padrão; Opus só na fase de decisão de mudança estrutural.
 - Verificação leve: `bash verify_conferencia.sh` (contagens de `esc()`/`innerHTML`, viaturas presentes,
   sintaxe balanceada). Rodar antes de qualquer commit que toque `index.html`.
-  Baseline 2026-11-16 (b16, v2026.8.11): `esc()=107` · `innerHTML=23` · `initializeApp=1` ·
+  Baseline 2026-11-16 (b17, v2026.8.12; igual à b16): `esc()=107` · `innerHTML=23` · `initializeApp=1` ·
   `ADMIN_EMAIL=4` · `unsafe-eval=0` · `checkRateLimit=2` · `patchItemStatus=2` · `patchProgress=2`.
   Divergência = investigar antes de seguir. (`ADMIN_EMAIL` 3→4 na b11: filtro do admin master no
   `loadEfetivo`; `esc()` 97→99 na b12: o rank fora da lista entra escapado no select de graduação.)
